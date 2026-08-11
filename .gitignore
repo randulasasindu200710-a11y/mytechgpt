@@ -1,0 +1,7 @@
+# Streamlit secrets (local only)
+.streamlit/
+
+# Python
+__pycache__/
+*.pyc
+.env
