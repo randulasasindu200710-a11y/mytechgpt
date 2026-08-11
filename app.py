@@ -1,10 +1,13 @@
 import streamlit as st
-import requests
+import google.generativeai as genai
 
-# 1. ඔබගේ Google API Access Token එක (AQ. කේතය)
-api_key = "AQ.Ab8RN6LXnk2Q0qmVZyvWPjpXOcITdFjUPli9T6cGtEMqmxThbA"
+# 1. ඔබ ලබාගත් අලුත් AIzaSy API Key එක
+api_key = "AIzaSyBrXk9qKQsezb-mBSwyTiIjI8dKTXTu9HY"
 
-# 2. System Instruction සැකසීම
+# AI එක Configure කිරීම
+genai.configure(api_key=api_key)
+
+# 2. බුද්ධිමත් AI Model එක සහ System Instruction සැකසීම
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි. 
 කවුරුන් හෝ ඔබගෙන් 'ඔයාව හැදුවේ කවුද?', 'ඔයාගේ නිර්මාණකරු කවුද?' හෝ ඒ හා සමාන ප්‍රශ්නයක් ඇසුවහොත්, 'මාව නිර්මාණය කළේ රන්දුල සසිඳු (Randula Sasindu) විසිනි' ලෙස පැහැදිලිව පිළිතුරු දෙන්න.
 
@@ -13,47 +16,25 @@ system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්
 
 ඔබව නිර්මාණය කළ අය ගැන අසන ප්‍රශ්න හැර වෙනත් විෂය බාහිර කිසිදු මාතෘකාවකට පිළිතුරු නොදිය යුතු අතර, එවැනි ප්‍රශ්නයක් ඇසුවහොත් 'සමාවෙන්න, මම පිළිතුරු සපයන්නේ ET, SFT සහ IT යන තාක්ෂණවේදී විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි' ලෙස කාරුණිකව පවසන්න."""
 
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction=system_prompt
+)
+
 st.title("මගේ තාක්ෂණවේදී AI සහකාරයා (ET/SFT/IT) 🧠🤖")
 
-# 3. පරිශීලකයාගෙන් අලුත් ප්‍රශ්නයක් ලබා ගැනීම
+# 3. Chat Session එක තබා ගැනීම
+if "chat_session" not in st.session_state:
+    st.session_state.chat_session = model.start_chat(history=[])
+
+# 4. පරිශීලකයාගෙන් අලුත් ප්‍රශ්නයක් ලබා ගැනීම
 if prompt := st.chat_input("ET, SFT හෝ IT විෂයයන්ට අදාළ ප්‍රශ්නයක් අසන්න..."):
-    # පරිශීලකයාගේ ප්‍රශ්නය පෙන්වීම
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # AI එකෙන් පිළිතුර ලබා ගැනීම
     with st.chat_message("assistant"):
         try:
-            # නිවැරදි Model URL එක (gemini-1.5-flash)
-            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-            
-            # AQ. කේතය සඳහා නිවැරදි Authorization Header එක
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}"
-            }
-            
-            payload = {
-                "systemInstruction": {
-                    "parts": [{"text": system_prompt}]
-                },
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ]
-            }
-            
-            # API Request එක යැවීම
-            response = requests.post(url, headers=headers, json=payload)
-            res_data = response.json()
-            
-            if response.status_code == 200:
-                bot_reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
-                st.markdown(bot_reply)
-            else:
-                error_msg = res_data.get("error", {}).get("message", "Unknown error")
-                st.error(f"දෝෂයක් ඇති විය: {error_msg}")
-                
+            response = st.session_state.chat_session.send_message(prompt)
+            st.markdown(response.text)
         except Exception as e:
             st.error(f"දෝෂයක් ඇති විය: {e}")
