@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # 1. ඔබගේ API Key එක
-api_key = "AIzaSyBrXk9qKQsezb-mBSwyTiIjI8dKTXTu9HY"
+api_key = st.secrets["GOOGLE_API_KEY"]
 
 # AI එක Configure කිරීම
 genai.configure(api_key=api_key)
