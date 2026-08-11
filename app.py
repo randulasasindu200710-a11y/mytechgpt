@@ -1,8 +1,8 @@
 import streamlit as st
 import requests
 
-# 1. ඔබගේ Google API Key එක
-api_key = "AQ.Ab8RN6LXnk2Q0qmVZyvWPjpXOcITdFjUPli9T6cGtEMqmxThbA"
+# 1. ඔබගේ Google API Access Token එක (AQ. කේතය)
+api_key = "AQ.Ab8RN6iGGxhl30kFymQFfo3GPO3U4LvVkmuzIndrJTpDQU_nmQ"
 
 # 2. System Instruction සැකසීම
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි. 
@@ -21,17 +21,20 @@ if prompt := st.chat_input("ET, SFT හෝ IT විෂයයන්ට අදා
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # AI එකෙන් පිළිතුර ලබා ගැනීම (gemini-3.6-flash Model එක භාවිත කර ඇත)
+    # AI එකෙන් පිළිතුර ලබා ගැනීම
     with st.chat_message("assistant"):
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
+            # නිවැරදි Model URL එක (gemini-1.5-flash)
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
             
+            # AQ. කේතය සඳහා නිවැරදි Authorization Header එක
             headers = {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
             }
             
             payload = {
-                "system_instruction": {
+                "systemInstruction": {
                     "parts": [{"text": system_prompt}]
                 },
                 "contents": [
