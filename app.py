@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. ඔබ ලබාගත් අලුත් AIzaSy API Key එක
+# 1. ඔබගේ API Key එක
 api_key = "AIzaSyBrXk9qKQsezb-mBSwyTiIjI8dKTXTu9HY"
 
 # AI එක Configure කිරීම
@@ -16,8 +16,9 @@ system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්
 
 ඔබව නිර්මාණය කළ අය ගැන අසන ප්‍රශ්න හැර වෙනත් විෂය බාහිර කිසිදු මාතෘකාවකට පිළිතුරු නොදිය යුතු අතර, එවැනි ප්‍රශ්නයක් ඇසුවහොත් 'සමාවෙන්න, මම පිළිතුරු සපයන්නේ ET, SFT සහ IT යන තාක්ෂණවේදී විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි' ලෙස කාරුණිකව පවසන්න."""
 
+# මෙතැන Model නම "gemini-1.5-flash-latest" ලෙස වෙනස් කර ඇත
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-1.5-flash-latest",
     system_instruction=system_prompt
 )
 
