@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # 1. ඔබගේ Google API Key එක
-api_key = "AQ.Ab8RN6K7sDd-nUBu5kOlbv_FIjQk_0jt5o1StLBTJOvB9WRrIA"
+api_key = "AQ.Ab8RN6IGGxhI30kFymQFFo3GPO3U4LvVkmuzlndrJTpDQU_nmQ"
 
 # 2. System Instruction සැකසීම
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි. 
@@ -21,16 +21,17 @@ if prompt := st.chat_input("ET, SFT හෝ IT විෂයයන්ට අදා
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # AI එකෙන් පිළිතුර ලබා ගැනීම (Direct API Call)
+    # AI එකෙන් පිළිතුර ලබා ගැනීම (gemini-3.6-flash Model එක භාවිත කර ඇත)
     with st.chat_message("assistant"):
         try:
-            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
+            
             headers = {
-                "Content-Type": "application/json",
-                "x-goog-api-key": api_key
+                "Content-Type": "application/json"
             }
+            
             payload = {
-                "systemInstruction": {
+                "system_instruction": {
                     "parts": [{"text": system_prompt}]
                 },
                 "contents": [
@@ -40,7 +41,7 @@ if prompt := st.chat_input("ET, SFT හෝ IT විෂයයන්ට අදා
                 ]
             }
             
-            # API එකට Request එක යැවීම
+            # API Request එක යැවීම
             response = requests.post(url, headers=headers, json=payload)
             res_data = response.json()
             
