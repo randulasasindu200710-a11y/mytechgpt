@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # 1. ඔබගේ Google API Access Token එක (AQ. කේතය)
-api_key = "AQ.Ab8RN6iGGxhl30kFymQFfo3GPO3U4LvVkmuzIndrJTpDQU_nmQ"
+api_key = "AQ.Ab8RN6LXnk2Q0qmVZyvWPjpXOcITdFjUPli9T6cGtEMqmxThbA"
 
 # 2. System Instruction සැකසීම
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි. 
