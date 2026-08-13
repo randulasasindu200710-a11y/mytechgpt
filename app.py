@@ -1,54 +1,40 @@
 import streamlit as st
 import google.generativeai as genai
-import os
+from google.oauth2 import service_account
+import json
 
-# ============================================
-# 1. API KEY (AI Studio AQ. key එකම use කරන්න)
-# ============================================
+# ========== SERVICE ACCOUNT ==========
 try:
-    api_key = st.secrets["GOOGLE_API_KEY"]
+    service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 except:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    
-    # Local testing එකට පමණි
-    if not api_key:
-        # ⚠️ මෙතන ඔයාගේ AI Studio key එක දාන්න
-        api_key = "AQ.Ab8RN6LU7P9WOCRrPr1gSE9D1XM5UD5HYUIEoBZ9WYyNgti06Q"
-        st.warning("⚠️ Local testing mode")
-
-if not api_key:
-    st.error("❌ GOOGLE_API_KEY හමුවුණේ නැහැ")
+    st.error("❌ Service Account JSON key හමුවුණේ නැහැ")
     st.stop()
 
-genai.configure(api_key=api_key)
+credentials = service_account.Credentials.from_service_account_info(
+    service_account_info,
+    scopes=['https://www.googleapis.com/auth/cloud-platform']
+)
 
-# ============================================
-# 2. SYSTEM INSTRUCTION
-# ============================================
+genai.configure(credentials=credentials)
+
+# ========== SYSTEM INSTRUCTION ==========
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි.
 
 ඔබ ශ්‍රී ලංකාවේ උසස් පෙළ තාක්ෂණවේදය (Technology) විෂය ධාරාවට අදාළව පමණක් පිළිතුරු සපයන AI සහකාරයෙකි.
 ET, SFT, IT/ICT විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණක් පිළිතුරු දෙන්න."""
 
-# ============================================
-# 3. MODEL (gemini-1.5-flash-latest නෙවෙයි!)
-# ============================================
+# ========== MODEL ==========
 try:
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",  # ✅ -latest නැතුව
+        model_name="gemini-1.5-flash",
         system_instruction=system_prompt
     )
-    # Test කරන්න
-    test_response = model.generate_content("hello")
-    st.sidebar.success("✅ API Connected!")
+    st.sidebar.success("✅ Connected!")
 except Exception as e:
-    st.error(f"❌ Model error: {e}")
-    st.info("API Key එක හරිද? AI Studio එකෙන් නැවත copy කර බලන්න")
+    st.error(f"❌ Error: {e}")
     st.stop()
 
-# ============================================
-# 4. UI
-# ============================================
+# ========== UI ==========
 st.title("🧠 බුද්ධි - තාක්ෂණවේදී AI සහකාරිය")
 st.caption("ET | SFT | IT/ICT")
 
@@ -73,3 +59,9 @@ if prompt := st.chat_input("ප්‍රශ්නයක් අසන්න..."):
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
                 st.error(f"❌ දෝෂයක්: {e}")
+
+with st.sidebar:
+    if st.button("💬 Chat History මකන්න"):
+        st.session_state.clear()
+        st.rerun()
+    st.markdown("**Created by:** Randula Sasindu")
