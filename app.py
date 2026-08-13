@@ -1,26 +1,35 @@
 import streamlit as st
 import google.generativeai as genai
 from google.oauth2 import service_account
+from google.auth.transport.requests import Request
 import json
 
 # ========== SERVICE ACCOUNT ==========
 try:
     service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-except:
-    st.error("❌ Service Account JSON key හමුවුණේ නැහැ")
+    
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info,
+        scopes=['https://www.googleapis.com/auth/cloud-platform']
+    )
+    
+    # Token refresh
+    credentials.refresh(Request())
+    
+    # API key එකක් නැත්නම් credentials use කරන්න
+    genai.configure(
+        api_key=None,  # Explicitly set to None
+        credentials=credentials
+    )
+    
+    st.sidebar.success("✅ Service Account Connected!")
+
+except Exception as e:
+    st.error(f"❌ Auth Error: {e}")
     st.stop()
-
-credentials = service_account.Credentials.from_service_account_info(
-    service_account_info,
-    scopes=['https://www.googleapis.com/auth/cloud-platform']
-)
-
-genai.configure(credentials=credentials)
 
 # ========== SYSTEM INSTRUCTION ==========
 system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි.
-
-ඔබ ශ්‍රී ලංකාවේ උසස් පෙළ තාක්ෂණවේදය (Technology) විෂය ධාරාවට අදාළව පමණක් පිළිතුරු සපයන AI සහකාරයෙකි.
 ET, SFT, IT/ICT විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණක් පිළිතුරු දෙන්න."""
 
 # ========== MODEL ==========
@@ -29,9 +38,8 @@ try:
         model_name="gemini-1.5-flash",
         system_instruction=system_prompt
     )
-    st.sidebar.success("✅ Connected!")
 except Exception as e:
-    st.error(f"❌ Error: {e}")
+    st.error(f"❌ Model Error: {e}")
     st.stop()
 
 # ========== UI ==========
@@ -59,6 +67,7 @@ if prompt := st.chat_input("ප්‍රශ්නයක් අසන්න..."):
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
                 st.error(f"❌ දෝෂයක්: {e}")
+                st.info("Google Cloud Console එකේ 'Generative Language API' enable කරලාද?")
 
 with st.sidebar:
     if st.button("💬 Chat History මකන්න"):
