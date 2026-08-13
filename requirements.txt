@@ -1,1 +1,2 @@
-AIzaSyCLsCpUcUY1mRSVbXXF7QeRnDKTmpLqY1I
+streamlit
+google-generativeai
