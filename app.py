@@ -1,8 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. ඔබ ලබාදුන් අලුත් API Key එක
-api_key = "AIzaSyCLsCpUcUY1mRSVbXXF7QeRnDKTmpLqY1I"
+# 1. Streamlit Secrets හරහා ආරක්ෂිතව API Key එක ලබා ගැනීම
+api_key = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=api_key)
 
 # 2. System Instruction (AI ගේ හැසිරීම සහ නීති)
