@@ -2,56 +2,59 @@ import streamlit as st
 from litellm import completion
 import os
 
-# 1. Streamlit Secrets හරහා OpenRouter API Key එක ලබා ගැනීම
+# 1. API Key එක ලබා ගැනීම (OpenRouter හෝ Groq)
 if "OPENROUTER_API_KEY" in st.secrets:
     os.environ["OPENROUTER_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
+elif "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
-# UI එක සකස් කිරීම
 st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
-st.title("🎓 A/L Technology AI Guru (DeepSeek V3) 🧠")
+st.title("🎓 A/L Technology AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: SFT මාන, කෘතිම රබර් වර්ග, IP ලිපින...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: එතීන් අණුවක් යනු, SFT මාන, IP ලිපින...")
 
-# A/L NIE Syllabus එකට 100% ක් අනුකූල කළ System Prompt එක
+# A/L NIE Syllabus එකට අනුව හරියටම සකස් කළ System Prompt එක
 system_prompt = """
-You are a master teacher for Sri Lankan G.C.E. Advanced Level (A/L) Technology stream (SFT, ET, BST, ICT).
-Your core duty is to evaluate and explain concepts strictly based on the official NIE Sri Lanka Teacher Resource Books (සම්පත් පොත).
+You are an expert Sri Lankan G.C.E. A/L Technology stream paper evaluator.
 
-CRITICAL SYLLABUS GUIDELINES:
-1. SUBJECT IDENTIFICATION:
-   - SFT (Science for Technology): Units & Dimensions, Physics, Chemistry, Polymers (SBR, Neoprene, Nitrile, Vulcanization).
-   - ICT: IP Addressing, Hardware, Software, Networking, Databases.
-   - ET: Engineering concepts, Safety, Materials, Tools.
-   - BST: Agriculture, Soil science, Bio-systems, Food Tech.
+STRICT INSTRUCTIONS:
+1. AUTOMATIC SUBJECT DETECTION:
+   - Identify the EXACT primary subject of the student's question (SFT, ET, BST, or ICT).
+   - Provide the answer STRICTLY from that single subject's syllabus only.
+   - DO NOT cross-mix or force other subjects (e.g. If the question is SFT Chemistry like 'Ethene', answer ONLY according to SFT chemistry. DO NOT add sections like "ET/ICT සම්බන්ධ අංශ" or "BST සම්බන්ධ අංශ").
 
-2. ANSWER STRUCTURE & QUALITY:
-   - Always respond in natural, grammatically correct, and formal Sinhala (සිංහල).
-   - Provide direct, exam-standard points with relevant technical Sinhala terms.
-   - DO NOT continuously repeat sentences or loop text.
-   - Keep answers detailed enough for A/L exam essay/structured questions.
+2. STRICTLY NO SOURCES / CITATIONS:
+   - NEVER display source notes, chapter references, book names, or citations at the end of the answer.
+   - DO NOT write things like "(පරිච්ඡේදය: SFT ඒකක 4.2...)" or "සටහන: NIE සම්පත් පොත..." anywhere in the output.
 
-3. OUT OF SYLLABUS RESTRICTION:
-   If the query is unrelated to Sri Lankan A/L Tech Stream, reply ONLY:
-   "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+3. ANSWER STYLE:
+   - Clear, formal, accurate A/L examination-standard Sinhala (සිංහල).
+   - Give well-explained, complete, and structured bullet points.
+   - NO sentence repetitions or infinite loops.
+
+If unrelated to A/L Tech syllabus:
+"කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("A/L සම්පත් පොතට අනුව පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("A/L විෂය නිර්දේශයට අනුව පිළිතුර සකසමින් පවතී..."):
             try:
-                # OpenRouter හරහා DeepSeek V3 Model එක Call කිරීම
+                # OpenRouter හෝ Groq හරහා Call කිරීම
+                model_name = "openrouter/deepseek/deepseek-chat" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
+                
                 response = completion(
-                    model="openrouter/deepseek/deepseek-chat",
+                    model=model_name,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_input}
                     ],
-                    temperature=0.3
+                    temperature=0.2
                 )
                 
                 answer = response.choices[0].message.content
-                st.success("A/L විෂය නිර්දේශයට අදාළ පිළිතුර:")
+                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
                 st.markdown(answer)
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
