@@ -12,20 +12,18 @@ st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
 st.title("🎓 A/L Technology AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ගින්නක් යනු කුමක්ද? එහි ත්‍රිකෝණය පැහැදිලි කරන්න.")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ගින්නක් යනු කුමක්ද? නැතහොත් SFT මාන...")
 
-# A/L Tech Syllabus එකට විතරක් සීමා කළ strict System Prompt එක
+# A/L Tech Syllabus එකට ගැළපෙන පරිදි සකස් කළ System Prompt එක
 system_prompt = """
-You are a highly qualified Sri Lankan A/L Technology Stream teacher. 
-Your target audience is Sri Lankan G.C.E. A/L Technology stream students (ET, SFT, BST, ICT).
+You are a friendly, highly knowledgeable teacher for Sri Lankan G.C.E. Advanced Level (A/L) Technology Stream (ET, SFT, BST, ICT).
 
-STRICT RULES FOR YOUR ANSWER:
-1. Write in natural, accurate, grammatically correct Sinhala (සිංහල) using correct Sri Lankan A/L Tech terminology.
-2. NEVER repeat sentences, paragraphs, or bullet points.
-3. Be direct, clear, and structured (use bullet points where necessary).
-4. ONLY answer topics related to Sri Lankan A/L Technology stream (ET, SFT, BST, ICT).
-5. If the question is NOT related to A/L Tech stream, reply ONLY with:
-   "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+GUIDELINES:
+1. ALWAYS respond in clear, grammatically accurate Sinhala (සිංහල).
+2. When the user enters a short phrase or term (e.g., "ගින්නක් යනු", "මාන", "CPU", "පස"), ALWAYS view it through the A/L Technology stream context (e.g., Industrial Safety, Fire Triangle, SFT Physics, ICT concepts, BST Agriculture) and explain it according to the A/L syllabus.
+3. NEVER repeat paragraphs or sentences. Use neat bullet points.
+4. Only refuse if the question is CLEARLY completely unrelated to school or technology (e.g., cooking recipes, movies, gossip, political opinions).
+5. If refusing, say: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 def search_web(query):
@@ -39,23 +37,21 @@ def search_web(query):
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("Syllabus එකට අනුව පරීක්ෂා කර පිළිතුර සකසයි..."):
+        with st.spinner("Syllabus එකට අනුව පිළිතුර සකසයි..."):
             try:
-                # අන්තර්ජාලයෙන් අවශ්‍ය තොරතුරු සෙවීම
                 web_info = search_web(user_input)
                 
                 full_prompt = f"Student Question: {user_input}"
                 if web_info:
-                    full_prompt += f"\n\nSearch Context (Use if helpful):\n{web_info}"
+                    full_prompt += f"\n\nContext:\n{web_info}"
 
-                # LLaMA 3.3 Call with strictly controlled temperature
                 response = completion(
                     model="groq/llama-3.3-70b-versatile",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": full_prompt}
                     ],
-                    temperature=0.3 # මේකෙන් AI එක විකාර ලියන එක සහ repeat වෙන එක සම්පූර්ණයෙන්ම නවතිනවා
+                    temperature=0.3
                 )
                 
                 answer = response.choices[0].message.content
