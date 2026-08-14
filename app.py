@@ -9,26 +9,28 @@ if "GROQ_API_KEY" in st.secrets:
 
 # UI එක සකස් කිරීම
 st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
-st.title("🎓TECH-gpt")
-st.write("ET - SFT - IT")
+st.title("🎓 A/L Technology AI Guru 🧠")
+st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("Your quection?", placeholder="උදා: IP ලිපිනයක් යනු කුමක්ද? නැතහොත් SFT මාන...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: IP ලිපිනයක් යනු කුමක්ද? නැතහොත් SFT මාන...")
 
-# A/L Exam එකට ගැළපෙන පරිදි විස්තරාත්මක පිළිතුරු සැකසීමට සකස් කළ System Prompt එක
+# Repetition තහනම් කළ System Prompt එක
 system_prompt = """
-You are an expert Sri Lankan A/L Technology Stream (ET, SFT, BST, ICT) teacher and paper evaluator. 
+You are an expert Sri Lankan A/L Technology Stream (ET, SFT, BST, ICT) teacher.
 
-RESPONSE STRUCTURE RULES:
-1. ALWAYS provide detailed, comprehensive, and well-explained answers suitable for A/L exam standards.
-2. Write in clear, natural Sinhala (සිංහල) with correct technical terms.
-3. Structure the explanation logically using Markdown headings and bullet points. Include:
-   - 📌 **අර්ථදැක්වීම සහ හඳුන්වාදීම (Definition & Introduction)**
-   - 🎯 **ප්‍රධාන කාර්යයන් සහ වැදගත්කම (Key Functions & Importance)**
-   - 🔍 **වර්ගීකරණය / ප්‍රධාන වර්ග (Types & Classifications)** (e.g., IPv4 vs IPv6, Static vs Dynamic)
-   - 💡 **පැහැදිලි කිරීම සහ උදාහරණ (Examples & Explanation)**
-4. NEVER repeat sentences or loop paragraphs.
-5. Only refuse if the question is CLEARLY completely unrelated to school or technology (e.g., movies, gossip, cooking recipes). 
-   If refusing, say: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+CRITICAL GENERATION RULES:
+1. NEVER REPEAT the same sentence, phrase, or line under any circumstances.
+2. Once a point or section is written, STOP and move immediately to the next topic.
+3. Write in clean, natural Sinhala (සිංහල). Keep it structured and easy to read.
+
+RESPONSE STRUCTURE:
+- 📌 **අර්ථදැක්වීම (Definition)**: Brief 2-3 sentence introduction.
+- 🎯 **ප්‍රධාන කාර්යය සහ වැදගත්කම (Key Function)**: Main points in bullet form.
+- 🔍 **වර්ගීකරණය (Types & Categories)**: Key types with brief descriptions.
+- 💡 **උදාහරණ (Examples)**: Real-world AL syllabus examples.
+
+If unrelated to AL Tech:
+"කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 def search_web(query):
@@ -42,7 +44,7 @@ def search_web(query):
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("A/L විෂය නිර්දේශයට අනුව විස්තරාත්මක පිළිතුරක් සකසමින් පවතී..."):
+        with st.spinner("A/L විෂය නිර්දේශයට අනුව පිළිතුර සකසමින් පවතී..."):
             try:
                 web_info = search_web(user_input)
                 
@@ -50,13 +52,17 @@ if st.button("පිළිතුර ලබාගන්න"):
                 if web_info:
                     full_prompt += f"\n\nContext:\n{web_info}"
 
+                # Repetition සම්පූර්ණයෙන්ම නැවැත්වූ LLaMA Model Call එක
                 response = completion(
                     model="groq/llama-3.3-70b-versatile",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": full_prompt}
                     ],
-                    temperature=0.3
+                    temperature=0.5,
+                    frequency_penalty=0.8,  # Repeat වෙන එක නවත්වන ප්‍රධානම දේ
+                    presence_penalty=0.6,   # අලුත් වචන භාවිතයට පෙළඹවීම
+                    max_tokens=1000         # දිගටම repeat වෙමින් ලිවීම වැළැක්වීම
                 )
                 
                 answer = response.choices[0].message.content
