@@ -2,51 +2,52 @@ import streamlit as st
 from litellm import completion
 import os
 
-# 1. Groq API Key එක ලබා ගැනීම
-if "GROQ_API_KEY" in st.secrets:
-    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+# 1. Streamlit Secrets හරහා OpenRouter API Key එක ලබා ගැනීම
+if "OPENROUTER_API_KEY" in st.secrets:
+    os.environ["OPENROUTER_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
 
 # UI එක සකස් කිරීම
 st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
-st.title("🎓 A/L Technology AI Guru 🧠")
+st.title("🎓 A/L Technology AI Guru (DeepSeek V3) 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: කෘතිම රබර් වර්ග, SFT මාන, IP ලිපින...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: SFT මාන, කෘතිම රබර් වර්ග, IP ලිපින...")
 
-# ලංකාවේ A/L NIE Resource Book එකට අනුව සකස් කළ System Prompt එක
+# A/L NIE Syllabus එකට 100% ක් අනුකූල කළ System Prompt එක
 system_prompt = """
-You are a top Sri Lankan G.C.E. A/L Technology stream teacher (SFT, ET, BST, ICT) who strictly marks papers according to the NIE (National Institute of Education Sri Lanka) Teacher Resource Book (සම්පත් පොත).
+You are a master teacher for Sri Lankan G.C.E. Advanced Level (A/L) Technology stream (SFT, ET, BST, ICT).
+Your core duty is to evaluate and explain concepts strictly based on the official NIE Sri Lanka Teacher Resource Books (සම්පත් පොත).
 
-STRICT SYLLABUS DIRECTIVES:
-1. Always base answers strictly on the official Sri Lankan G.C.E. A/L Syllabus (NIE Resource Book).
-   - E.g., For SFT Polymers / Synthetic Rubber (කෘතිම රබර්): Always mention specific syllabus types like SBR (Styrene-Butadiene Rubber: Monomers = Styrene + 1,3-butadiene), Neoprene (Chloroprene), Nitrile Rubber (Acrylonitrile + Butadiene), and Vulcanization using Sulfur.
-   - For SFT Physics: Units, Dimensions, Mechanics according to AL SFT Resource book.
-   - For ICT / ET / BST: Strict adherence to Sri Lankan A/L syllabus terms.
+CRITICAL SYLLABUS GUIDELINES:
+1. SUBJECT IDENTIFICATION:
+   - SFT (Science for Technology): Units & Dimensions, Physics, Chemistry, Polymers (SBR, Neoprene, Nitrile, Vulcanization).
+   - ICT: IP Addressing, Hardware, Software, Networking, Databases.
+   - ET: Engineering concepts, Safety, Materials, Tools.
+   - BST: Agriculture, Soil science, Bio-systems, Food Tech.
 
-2. ANSWER FORMATTING:
-   - Provide direct, accurate A/L standard Sinhala (සිංහල) points.
-   - Include Monomers (මොනෝමර), Properties (ලක්ෂණ), and Uses (භාවිත) where applicable.
-   - NO general internet fluff or useless repeating sentences. 
-   - Keep answers clear, technical, precise, and directly suitable for AL exam papers.
+2. ANSWER STRUCTURE & QUALITY:
+   - Always respond in natural, grammatically correct, and formal Sinhala (සිංහල).
+   - Provide direct, exam-standard points with relevant technical Sinhala terms.
+   - DO NOT continuously repeat sentences or loop text.
+   - Keep answers detailed enough for A/L exam essay/structured questions.
 
-If unrelated to Sri Lankan AL Technology stream:
-"කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+3. OUT OF SYLLABUS RESTRICTION:
+   If the query is unrelated to Sri Lankan A/L Tech Stream, reply ONLY:
+   "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("A/L සම්පත් පොතට (Resource Book) අනුව පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("A/L සම්පත් පොතට අනුව පිළිතුර සකසමින් පවතී..."):
             try:
+                # OpenRouter හරහා DeepSeek V3 Model එක Call කිරීම
                 response = completion(
-                    model="groq/llama-3.3-70b-versatile",
+                    model="openrouter/deepseek/deepseek-chat",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_input}
                     ],
-                    temperature=0.2, # Exact A/L Syllabus facts ලබා ගැනීමට Temperature එක අඩු කළා
-                    frequency_penalty=0.4,
-                    presence_penalty=0.3,
-                    max_tokens=1500
+                    temperature=0.3
                 )
                 
                 answer = response.choices[0].message.content
