@@ -1,49 +1,66 @@
 import streamlit as st
-import google.generativeai as genai
+from litellm import completion
+from duckduckgo_search import DDGS
+import os
 
-# 1. Streamlit Secrets හරහා ආරක්ෂිතව API Key එක ලබා ගැනීම
-api_key = st.secrets["GOOGLE_API_KEY"]
-genai.configure(api_key=api_key)
+# 1. Streamlit Secrets හරහා Groq API Key එක ලබා ගැනීම
+os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
-# 2. System Instruction (AI ගේ හැසිරීම සහ නීති)
-system_prompt = """ඔබේ නම 'බුද්ධි'. ඔබව නිර්මාණය කරන ලද්දේ රන්දුල සසිඳු (Randula Sasindu) විසිනි. 
-කවුරුන් හෝ ඔබගෙන් 'ඔයාව හැදුවේ කවුද?', 'ඔයාගේ නිර්මාණකරු කවුද?' හෝ ඒ හා සමාන ප්‍රශ්නයක් ඇසුවහොත්, 'මාව නිර්මාණය කළේ රන්දුල සසිඳු (Randula Sasindu) විසිනි' ලෙස පැහැදිලිව පිළිතුරු දෙන්න.
+# UI එක සකස් කිරීම
+st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
+st.title("🎓 A/L Technology AI Guru (Live Web Search සමඟ) 🧠")
+st.write("උසස් පෙළ **තාක්ෂණවේදය (Technology)** විෂය ධාරාවට අදාළ ඕනෑම ප්‍රශ්නයක් අහන්න:")
 
-ඔබ ශ්‍රී ලංකාවේ උසස් පෙළ තාක්ෂණවේදය (Technology) විෂය ධාරාවට අදාළව පමණක් පිළිතුරු සපයන AI සහකාරයෙකි. 
-ඔබ පිළිතුරු ලබා දිය යුත්තේ ඉංජිනේරු තාක්ෂණවේදය (ET), තාක්ෂණවේදය සඳහා විද්‍යාව (SFT) සහ තොරතුරු හා සන්නිවේදන තාක්ෂණය (IT/ICT) යන විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණි. 
+user_input = st.text_input("ඔබේ විෂය කරුණ / ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: SFT වල මාන (Dimensions) යනු කුමක්ද?")
 
-ඔබව නිර්මාණය කළ අය ගැන අසන ප්‍රශ්න හැර වෙනත් විෂය බාහිර කිසිදු මාතෘකාවකට පිළිතුරු නොදිය යුතු අතර, එවැනි ප්‍රශ්නයක් ඇසුවහොත් 'සමාවෙන්න, මම පිළිතුරු සපයන්නේ ET, SFT සහ IT යන තාක්ෂණවේදී විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි' ලෙස කාරුණිකව පවසන්න."""
+# A/L Tech Syllabus එකට විතරක් සීමා කළ System Prompt එක
+system_prompt = """
+You are an expert tutor for the Sri Lankan G.C.E. Advanced Level (A/L) Technology Stream (ශ්‍රී ලංකාවේ A/L තාක්ෂණවේදය විෂය ධාරාව).
 
-# 3. Model එක Setup කිරීම (නිවැරදිම Model නම)
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    system_instruction=system_prompt
-)
+Your rules:
+1. ONLY answer questions related to the Sri Lankan A/L Technology stream subjects:
+   - Science for Technology (SFT / තාක්ෂණවේදය සඳහා විද්‍යාව)
+   - Engineering Technology (ET / ඉංජිනේරු තාක්ෂණවේදය)
+   - Biosystems Technology (BST / ජෛව පද්ධති තාක්ෂණවේදය)
+   - Information and Communication Technology (ICT / තොරතුරු හා සන්නිවේදන තාක්ෂණය)
 
-# 4. Streamlit UI (පිටුවේ පෙනුම)
-st.set_page_config(page_title="තාක්ෂණවේදී AI", page_icon="🧠")
-st.title("මගේ තාක්ෂණවේදී AI සහකාරයා (ET/SFT/IT) 🧠🤖")
-st.caption("Powered by Gemini & Created by Randula Sasindu")
+2. ALWAYS respond in clear, natural, and friendly Sinhala language suited for an A/L student. Use bullet points and simple terms where necessary.
 
-# 5. Chat History (පෙර පණිවිඩ) මතක තබා ගැනීම
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = model.start_chat(history=[])
+3. Use the provided live web search context to make your answers up-to-date and highly accurate.
 
-for message in st.session_state.chat_session.history:
-    role = "assistant" if message.role == "model" else "user"
-    with st.chat_message(role):
-        st.markdown(message.parts[0].text)
+4. If the user asks ANYTHING outside the Sri Lankan A/L Technology stream (e.g., General knowledge, Maths, Bio, Arts, Commerce, cooking, movies, or general technology not in syllabus), politely refuse in Sinhala by saying:
+   "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (Technology) විෂය ධාරාවට (SFT, ET, BST, ICT) අදාළ ප්‍රශ්න වලට පමණයි."
+"""
 
-# 6. පරිශීලකයාගෙන් අලුත් ප්‍රශ්නයක් ලබා ගැනීම
-if prompt := st.chat_input("ET, SFT හෝ IT විෂයයන්ට අදාළ ප්‍රශ්නයක් අසන්න..."):
-    # User ගේ ප්‍රශ්නය පෙන්වීම
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # AI ගේ පිළිතුර ලබා ගැනීම සහ පෙන්වීම
-    with st.chat_message("assistant"):
-        try:
-            response = st.session_state.chat_session.send_message(prompt)
-            st.markdown(response.text)
-        except Exception as e:
-            st.error(f"දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න: {e}")
+# Web Search කිරීම සඳහා වන Function එක (කිසිම API Key එකක් නොමැතිව)
+def search_web(query):
+    try:
+        results = DDGS().text(query, max_results=3)
+        search_text = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+        return search_text
+    except Exception:
+        return "අන්තර්ජාල සෙවුම් තොරතුරු ලබාගැනීමට නොහැකි විය."
+
+if st.button("පිළිතුර ලබාගන්න"):
+    if user_input:
+        with st.spinner("අන්තර්ජාලයෙන් තොරතුරු සොයමින් Syllabus එකට අනුව පිළිතුර සකසයි..."):
+            try:
+                # 1. අන්තර්ජාලයෙන් තොරතුරු සෙවීම
+                web_context = search_web(user_input)
+                
+                # 2. ප්‍රශ්නය සහ සොයාගත් තොරතුරු AI එකට යැවීම
+                full_user_prompt = f"User Question: {user_input}\n\nLive Search Context from Web:\n{web_context}"
+
+                response = completion(
+                    model="groq/llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": full_user_prompt}
+                    ]
+                )
+                st.success("පිළිතුර:")
+                st.write(response.choices[0].message.content)
+            except Exception as e:
+                st.error(f"දෝෂයක් ඇති විය: {e}")
+    else:
+        st.warning("කරුණාකර ප්‍රශ්නයක් ඇතුළත් කරන්න.")
