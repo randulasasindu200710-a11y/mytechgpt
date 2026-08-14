@@ -9,21 +9,26 @@ if "GROQ_API_KEY" in st.secrets:
 
 # UI එක සකස් කිරීම
 st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
-st.title("🎓 A/L Technology AI Guru 🧠")
-st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
+st.title("🎓TECH-gpt")
+st.write("ET - SFT - IT")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ගින්නක් යනු කුමක්ද? නැතහොත් SFT මාන...")
+user_input = st.text_input("Your quection?", placeholder="උදා: IP ලිපිනයක් යනු කුමක්ද? නැතහොත් SFT මාන...")
 
-# A/L Tech Syllabus එකට ගැළපෙන පරිදි සකස් කළ System Prompt එක
+# A/L Exam එකට ගැළපෙන පරිදි විස්තරාත්මක පිළිතුරු සැකසීමට සකස් කළ System Prompt එක
 system_prompt = """
-You are a friendly, highly knowledgeable teacher for Sri Lankan G.C.E. Advanced Level (A/L) Technology Stream (ET, SFT, BST, ICT).
+You are an expert Sri Lankan A/L Technology Stream (ET, SFT, BST, ICT) teacher and paper evaluator. 
 
-GUIDELINES:
-1. ALWAYS respond in clear, grammatically accurate Sinhala (සිංහල).
-2. When the user enters a short phrase or term (e.g., "ගින්නක් යනු", "මාන", "CPU", "පස"), ALWAYS view it through the A/L Technology stream context (e.g., Industrial Safety, Fire Triangle, SFT Physics, ICT concepts, BST Agriculture) and explain it according to the A/L syllabus.
-3. NEVER repeat paragraphs or sentences. Use neat bullet points.
-4. Only refuse if the question is CLEARLY completely unrelated to school or technology (e.g., cooking recipes, movies, gossip, political opinions).
-5. If refusing, say: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+RESPONSE STRUCTURE RULES:
+1. ALWAYS provide detailed, comprehensive, and well-explained answers suitable for A/L exam standards.
+2. Write in clear, natural Sinhala (සිංහල) with correct technical terms.
+3. Structure the explanation logically using Markdown headings and bullet points. Include:
+   - 📌 **අර්ථදැක්වීම සහ හඳුන්වාදීම (Definition & Introduction)**
+   - 🎯 **ප්‍රධාන කාර්යයන් සහ වැදගත්කම (Key Functions & Importance)**
+   - 🔍 **වර්ගීකරණය / ප්‍රධාන වර්ග (Types & Classifications)** (e.g., IPv4 vs IPv6, Static vs Dynamic)
+   - 💡 **පැහැදිලි කිරීම සහ උදාහරණ (Examples & Explanation)**
+4. NEVER repeat sentences or loop paragraphs.
+5. Only refuse if the question is CLEARLY completely unrelated to school or technology (e.g., movies, gossip, cooking recipes). 
+   If refusing, say: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 def search_web(query):
@@ -37,7 +42,7 @@ def search_web(query):
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("Syllabus එකට අනුව පිළිතුර සකසයි..."):
+        with st.spinner("A/L විෂය නිර්දේශයට අනුව විස්තරාත්මක පිළිතුරක් සකසමින් පවතී..."):
             try:
                 web_info = search_web(user_input)
                 
@@ -55,7 +60,7 @@ if st.button("පිළිතුර ලබාගන්න"):
                 )
                 
                 answer = response.choices[0].message.content
-                st.success("පිළිතුර:")
+                st.success("විස්තරාත්මක පිළිතුර:")
                 st.markdown(answer)
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
