@@ -11,35 +11,31 @@ st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
 st.title("🎓 A/L Technology AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: SFT වල මාන (Dimensions), Ethernet switch, ගින්නක් යනු...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: කෘතිම රබර් වර්ග, SFT මාන, IP ලිපින...")
 
-# A/L Tech Syllabus එක නිවැරදිව හඳුනාගන්නා System Prompt එක
+# ලංකාවේ A/L NIE Resource Book එකට අනුව සකස් කළ System Prompt එක
 system_prompt = """
-You are an expert Sri Lankan G.C.E. A/L Technology stream (SFT, ET, BST, ICT) Master Teacher.
+You are a top Sri Lankan G.C.E. A/L Technology stream teacher (SFT, ET, BST, ICT) who strictly marks papers according to the NIE (National Institute of Education Sri Lanka) Teacher Resource Book (සම්පත් පොත).
 
-SUBJECT RECOGNITION RULES:
-1. Identify the subject accurately:
-   - SFT (Science for Technology): Units & Dimensions (ඒකක හා මාන), Physics, Chemistry, Basic Maths.
-   - ICT: Networking, Hardware, Software, Programming, Databases.
-   - ET: Engineering concepts, Civil, Mechanical, Electrical, Workshop Safety.
-   - BST: Agro Technology, Food Tech, Bio-systems.
+STRICT SYLLABUS DIRECTIVES:
+1. Always base answers strictly on the official Sri Lankan G.C.E. A/L Syllabus (NIE Resource Book).
+   - E.g., For SFT Polymers / Synthetic Rubber (කෘතිම රබර්): Always mention specific syllabus types like SBR (Styrene-Butadiene Rubber: Monomers = Styrene + 1,3-butadiene), Neoprene (Chloroprene), Nitrile Rubber (Acrylonitrile + Butadiene), and Vulcanization using Sulfur.
+   - For SFT Physics: Units, Dimensions, Mechanics according to AL SFT Resource book.
+   - For ICT / ET / BST: Strict adherence to Sri Lankan A/L syllabus terms.
 
-2. NEVER confuse SFT concepts with ICT! (e.g. "මාන" / "ඒකක" belongs to SFT, NOT ICT).
-3. Handle spelling variations intelligently (e.g., if user writes "එකින් අනුවක්" or "ඒකක හා මාන", recognize it as SFT Units/Dimensions).
+2. ANSWER FORMATTING:
+   - Provide direct, accurate A/L standard Sinhala (සිංහල) points.
+   - Include Monomers (මොනෝමර), Properties (ලක්ෂණ), and Uses (භාවිත) where applicable.
+   - NO general internet fluff or useless repeating sentences. 
+   - Keep answers clear, technical, precise, and directly suitable for AL exam papers.
 
-RESPONSE RULES:
-- Write in clear, grammatically correct, natural Sinhala (සිංහල).
-- Provide a clear, detailed A/L exam-standard answer (around 150-250 words).
-- Use bullet points where appropriate, but DO NOT force artificial categories.
-- ABSOLUTELY NO REPETITION or infinite loops of the same sentence.
-
-IF NOT A/L TECH:
-Say only: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+If unrelated to Sri Lankan AL Technology stream:
+"කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("A/L විෂය නිර්දේශයට අනුව පරීක්ෂා කර පිළිතුර සකසයි..."):
+        with st.spinner("A/L සම්පත් පොතට (Resource Book) අනුව පිළිතුර සකසමින් පවතී..."):
             try:
                 response = completion(
                     model="groq/llama-3.3-70b-versatile",
@@ -47,14 +43,14 @@ if st.button("පිළිතුර ලබාගන්න"):
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_input}
                     ],
-                    temperature=0.3,
-                    frequency_penalty=0.5,
+                    temperature=0.2, # Exact A/L Syllabus facts ලබා ගැනීමට Temperature එක අඩු කළා
+                    frequency_penalty=0.4,
                     presence_penalty=0.3,
                     max_tokens=1500
                 )
                 
                 answer = response.choices[0].message.content
-                st.success("විස්තරාත්මක පිළිතුර:")
+                st.success("A/L විෂය නිර්දේශයට අදාළ පිළිතුර:")
                 st.markdown(answer)
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
