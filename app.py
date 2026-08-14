@@ -10,7 +10,7 @@ elif "GROQ_API_KEY" in st.secrets:
 
 st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
 st.title("🎓TECH-gpt")
-st.write("උසස් පෙළ **තාක්ෂණවේදය විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
+st.write("උසස් පෙළ තාක්ෂණවේදය විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
 user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: එතීන් අණුවක් යනු, SFT මාන, IP ලිපින...")
 
