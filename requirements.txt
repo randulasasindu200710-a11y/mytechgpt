@@ -1,3 +1,2 @@
 streamlit
 litellm
-duckduckgo-search
