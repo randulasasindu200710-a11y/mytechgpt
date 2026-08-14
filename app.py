@@ -1,6 +1,5 @@
 import streamlit as st
 from litellm import completion
-from duckduckgo_search import DDGS
 import os
 
 # 1. Groq API Key එක ලබා ගැනීම
@@ -12,59 +11,46 @@ st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
 st.title("🎓 A/L Technology AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: IP ලිපිනයක් යනු කුමක්ද? නැතහොත් SFT මාන...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: SFT වල මාන (Dimensions), Ethernet switch, ගින්නක් යනු...")
 
-# විස්තරාත්මක පිළිතුරු ලබාදෙන පරිදි සකස් කළ System Prompt එක
+# A/L Tech Syllabus එක නිවැරදිව හඳුනාගන්නා System Prompt එක
 system_prompt = """
-You are an expert Sri Lankan G.C.E. A/L Technology Stream (ET, SFT, BST, ICT) teacher and exam paper evaluator.
+You are an expert Sri Lankan G.C.E. A/L Technology stream (SFT, ET, BST, ICT) Master Teacher.
 
-YOUR GOAL:
-Provide DETAILED, COMPREHENSIVE, and IN-DEPTH Sinhala explanations suitable for A/L examination standard answers.
+SUBJECT RECOGNITION RULES:
+1. Identify the subject accurately:
+   - SFT (Science for Technology): Units & Dimensions (ඒකක හා මාන), Physics, Chemistry, Basic Maths.
+   - ICT: Networking, Hardware, Software, Programming, Databases.
+   - ET: Engineering concepts, Civil, Mechanical, Electrical, Workshop Safety.
+   - BST: Agro Technology, Food Tech, Bio-systems.
 
-RULES FOR ANSWERING:
-1. Write in clear, natural, and grammatically accurate Sinhala (සිංහල).
-2. DO NOT give 1-2 word brief bullets. Provide detailed explanations (2-3 sentences per point) for every bullet point.
-3. Structure your response logically using Markdown:
-   - 📌 **අර්ථදැක්වීම සහ හැඳින්වීම (Definition & Introduction)**: Comprehensive, clear explanation of the core concept.
-   - 🎯 **ප්‍රධාන කාර්යයන් සහ වැදගත්කම (Key Functions & Importance)**: Explain WHY and HOW it works in detail.
-   - 🔍 **වර්ගීකරණය සහ වෙනස්කම් (Types & Classifications)**: Detailed comparison (e.g., IPv4 vs IPv6, Static vs Dynamic, bit lengths, format differences).
-   - 💡 **ප්‍රායෝගික උදාහරණ (Examples & Applications)**: Practical real-world examples with explanations.
-4. DO NOT repeat exact sentences or continuously loop text.
+2. NEVER confuse SFT concepts with ICT! (e.g. "මාන" / "ඒකක" belongs to SFT, NOT ICT).
+3. Handle spelling variations intelligently (e.g., if user writes "එකින් අනුවක්" or "ඒකක හා මාන", recognize it as SFT Units/Dimensions).
 
-IF UNRELATED TO A/L TECH:
+RESPONSE RULES:
+- Write in clear, grammatically correct, natural Sinhala (සිංහල).
+- Provide a clear, detailed A/L exam-standard answer (around 150-250 words).
+- Use bullet points where appropriate, but DO NOT force artificial categories.
+- ABSOLUTELY NO REPETITION or infinite loops of the same sentence.
+
+IF NOT A/L TECH:
 Say only: "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
-def search_web(query):
-    try:
-        results = DDGS().text(f"{query} Sri Lanka AL Technology", max_results=2)
-        if not results:
-            return ""
-        return "\n".join([f"- {r['body']}" for r in results])
-    except Exception:
-        return ""
-
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("A/L විෂය නිර්දේශයට අනුව විස්තරාත්මක පිළිතුරක් සකසමින් පවතී..."):
+        with st.spinner("A/L විෂය නිර්දේශයට අනුව පරීක්ෂා කර පිළිතුර සකසයි..."):
             try:
-                web_info = search_web(user_input)
-                
-                full_prompt = f"Student Question: {user_input}"
-                if web_info:
-                    full_prompt += f"\n\nContext:\n{web_info}"
-
-                # Balanced Parameters for High Detail + No Loops
                 response = completion(
                     model="groq/llama-3.3-70b-versatile",
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": full_prompt}
+                        {"role": "user", "content": user_input}
                     ],
-                    temperature=0.4,
-                    frequency_penalty=0.3, # Repeat වීම වළක්වන අතරම විස්තරාත්මකව ලියන්න ඉඩ දෙයි
+                    temperature=0.3,
+                    frequency_penalty=0.5,
                     presence_penalty=0.3,
-                    max_tokens=2048        # ලොකු විස්තරාත්මක පිළිතුරක් ලියන්න ඉඩ ලබා දේ
+                    max_tokens=1500
                 )
                 
                 answer = response.choices[0].message.content
