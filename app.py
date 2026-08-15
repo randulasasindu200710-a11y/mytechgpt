@@ -8,7 +8,7 @@ if "OPENROUTER_API_KEY" in st.secrets:
 elif "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
-st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
+st.set_page_config(page_title="TECHgpt", page_icon="🎓")
 st.title("🎓TECH-gpt")
 st.write("උසස් පෙළ තාක්ෂණවේදය විෂයයන්ට අදාළ ප්‍රශ්න අසන්න..")
 
