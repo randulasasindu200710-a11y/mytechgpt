@@ -12,7 +12,7 @@ st.set_page_config(page_title="A/L Tech AI Guru", page_icon="🎓")
 st.title("🎓 A/L Technology AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ප්‍රශ්න අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="Quection..")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ඔයාව හැදුවේ කවුද?, SFT මාන, IP ලිපින...")
 
 # System Prompt එකට Creator Identity එකතු කර සකස් කළ කෝඩ් එක
 system_prompt = """
