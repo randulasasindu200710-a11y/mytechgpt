@@ -40,9 +40,9 @@ If unrelated to A/L Tech syllabus AND not about your creator:
 "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
 """
 
-if st.button("පිළිතුර ලබාගන්න"):
+if st.button("Enter"):
     if user_input:
-        with st.spinner("පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("Loading..."):
             try:
                 model_name = "openrouter/deepseek/deepseek-chat" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
                 
