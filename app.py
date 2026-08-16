@@ -34,7 +34,12 @@ pdf_context_data = load_all_pdfs()
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ඕනෑම ප්‍රශ්නයක් අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: හුක් නියමය හා සූත්‍රය, ද්විතීයික පරිවෘත්තජ, IP ලිපින...")
+# ---------------------------------------------------------
+# Enter Key එකෙන් Submit වීමට Form එකක් භාවිත කිරීම
+# ---------------------------------------------------------
+with st.form(key="chat_form"):
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: හුක් නියමය හා සූත්‍රය, ද්විතීයික පරිවෘත්තජ, IP ලිපින...")
+    submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -51,8 +56,8 @@ A/L SFT SPECIFIC DEFINITIONS & FORMULAS RULE:
     (Where F = බලය, A = හරස්කඩ වර්ගඵලය, l = මුල් දිග, e = විතතිය, Y = යං මාපාංකය).
   * DO NOT use generic F = k * Delta L physics formula for SFT elasticity questions unless explicitly requested.
 
-MATH FORMATTING RULE:
-- Do NOT output raw system LaTeX brackets like [ F = k... ]. Use clean Markdown bold/text or standard readable math symbols.
+STRICT MARKDOWN TABLE FORMATTING RULE:
+- Whenever presenting data that involves compounds, sources, uses, functions, components, or comparisons (such as Secondary Metabolites), YOU MUST ALWAYS OUTPUT THE DATA IN A CLEAN MARKDOWN TABLE (| සංයෝගය | ප්‍රභවය | ප්‍රයෝජන |).
 
 STRICT PDF-FIRST RULE:
 - Prioritize definitions and syllabus wording from the uploaded PDF context where available.
@@ -62,7 +67,7 @@ ANSWER STYLE:
 - Clear structured bullet points or tables.
 """
 
-if st.button("පිළිතුර ලබාගන්න"):
+if submit_button:
     if user_input:
         with st.spinner("සටහන් විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
