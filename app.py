@@ -34,27 +34,37 @@ pdf_context_data = load_all_pdfs()
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ඕනෑම ප්‍රශ්නයක් අසන්න:")
 
-# ---------------------------------------------------------
-# Enter Key එකෙන් Submit වීමට Form එකක් භාවිත කිරීම
-# ---------------------------------------------------------
+# Form එකක් හරහා Input එක ලබාගැනීම (Enter Key එක වැඩ කරයි)
 with st.form(key="chat_form"):
     user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: හුක් නියමය හා සූත්‍රය, ද්විතීයික පරිවෘත්තජ, IP ලිපින...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
+# ---------------------------------------------------------
+# Strict Tech Subject Guardrail System Prompt
+# ---------------------------------------------------------
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
 
 CREATOR IDENTITY RULE:
 - If the user asks who made/created/developed you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
+STRICT SUBJECT DOMAIN RULE (A/L TECH STREAM ONLY):
+- You MUST ONLY answer questions directly related to the Sri Lankan G.C.E. Advanced Level Technology Stream subjects:
+  1. Science for Technology (SFT)
+  2. Engineering Technology (ET)
+  3. Bio-Systems Technology (BST)
+  4. Information & Communication Technology (ICT / IT)
+- IF the user asks ANYTHING outside these 4 subjects (e.g., Sinhala literature, History, Commerce, Arts, General Knowledge, everyday advice, gossip, politics, non-tech maths/physics/chemistry outside A/L Tech syllabus), YOU MUST REFUSE TO ANSWER.
+- In case of refusal, respond ONLY with this exact sentence:
+  "කණගාටුයි! මට පිළිතුරු දිය හැක්කේ උසස් පෙළ තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්න සඳහා පමණයි."
+
 A/L SFT SPECIFIC DEFINITIONS & FORMULAS RULE:
 - For Hooke's Law (හුක්ගේ නියමය) in SFT:
   * Definition MUST be: "සමානුපාතික සීමාව තුළ දී ප්‍රත්‍යස්ථ තන්තුවක ඇතිවන විතතිය (e) එය ඇතිකරනු ලබන්නා වූ ආතතියට / බලයට (F) අනුලෝමව සමානුපාතික වේ."
-  * Young's Modulus / Stress-Strain Formula MUST be presented as:
+  * Young's Modulus Formula MUST be:
     - යං මාපාංකය (Y) = (ප්‍රත්‍යාබලය / වික්‍රියාව) = (F / A) / (e / l) = (F * l) / (e * A)
     - විතතිය (e) = (l / (A * Y)) * F
     (Where F = බලය, A = හරස්කඩ වර්ගඵලය, l = මුල් දිග, e = විතතිය, Y = යං මාපාංකය).
-  * DO NOT use generic F = k * Delta L physics formula for SFT elasticity questions unless explicitly requested.
 
 STRICT MARKDOWN TABLE FORMATTING RULE:
 - Whenever presenting data that involves compounds, sources, uses, functions, components, or comparisons (such as Secondary Metabolites), YOU MUST ALWAYS OUTPUT THE DATA IN A CLEAN MARKDOWN TABLE (| සංයෝගය | ප්‍රභවය | ප්‍රයෝජන |).
@@ -84,13 +94,18 @@ if submit_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": final_user_prompt}
                     ],
-                    temperature=0.2,
+                    temperature=0.1,  # Strict rules පිළිපැදීමට Temperature එක 0.1 කර ඇත
                     frequency_penalty=0.5
                 )
                 
                 answer = response.choices[0].message.content
-                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
-                st.markdown(answer)
+                
+                # Refusal Message එකක්ද නැද්ද යන්න අනුව පෙන්වීම
+                if "කණගාටුයි!" in answer:
+                    st.warning(answer)
+                else:
+                    st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
+                    st.markdown(answer)
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
     else:
