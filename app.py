@@ -34,7 +34,7 @@ pdf_context_data = load_all_pdfs()
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ඕනෑම ප්‍රශ්නයක් අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ද්විතීයික පරිවෘත්තජ, SFT මාන, IP ලිපින...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: හුක් නියමය හා සූත්‍රය, ද්විතීයික පරිවෘත්තජ, IP ලිපින...")
 
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -42,23 +42,29 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If the user asks who made/created/developed you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-STRICT MARKDOWN TABLE FORMATTING RULE:
-- Whenever presenting data that involves compounds, sources, uses, functions, components, or comparisons (such as Secondary Metabolites: සංයෝග, ප්‍රභව, ප්‍රයෝජන), YOU MUST ALWAYS OUTPUT THE DATA IN A CLEAN MARKDOWN TABLE (| සංයෝගය | ප්‍රභවය | ප්‍රයෝජන |).
-- DO NOT convert tabular PDF data into general text paragraphs or bullet points. Preserve table structures.
+A/L SFT SPECIFIC DEFINITIONS & FORMULAS RULE:
+- For Hooke's Law (හුක්ගේ නියමය) in SFT:
+  * Definition MUST be: "සමානුපාතික සීමාව තුළ දී ප්‍රත්‍යස්ථ තන්තුවක ඇතිවන විතතිය (e) එය ඇතිකරනු ලබන්නා වූ ආතතියට / බලයට (F) අනුලෝමව සමානුපාතික වේ."
+  * Young's Modulus / Stress-Strain Formula MUST be presented as:
+    - යං මාපාංකය (Y) = (ප්‍රත්‍යාබලය / වික්‍රියාව) = (F / A) / (e / l) = (F * l) / (e * A)
+    - විතතිය (e) = (l / (A * Y)) * F
+    (Where F = බලය, A = හරස්කඩ වර්ගඵලය, l = මුල් දිග, e = විතතිය, Y = යං මාපාංකය).
+  * DO NOT use generic F = k * Delta L physics formula for SFT elasticity questions unless explicitly requested.
+
+MATH FORMATTING RULE:
+- Do NOT output raw system LaTeX brackets like [ F = k... ]. Use clean Markdown bold/text or standard readable math symbols.
 
 STRICT PDF-FIRST RULE:
-- Answer strictly using the definitions, tables, and details provided in the uploaded PDF / Syllabus Context.
+- Prioritize definitions and syllabus wording from the uploaded PDF context where available.
 
 ANSWER STYLE:
 - Accurate examination-standard Sinhala (සිංහල).
-- Use Markdown Tables for all structured/tabular data.
-- NO sentence repetition loops.
-- NEVER display source citations, page numbers, or chapter references at the end.
+- Clear structured bullet points or tables.
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("සටහන් විශ්ලේෂණය කර වගු සකසමින් පවතී..."):
+        with st.spinner("සටහන් විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
                 final_user_prompt = user_input
                 if pdf_context_data and len(pdf_context_data.strip()) > 50:
