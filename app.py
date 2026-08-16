@@ -12,9 +12,6 @@ if "OPENROUTER_API_KEY" in st.secrets:
 elif "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
-# ---------------------------------------------------------
-# PDF කියවීම සහ Sidebar එකේ Status පෙන්වීම
-# ---------------------------------------------------------
 @st.cache_data
 def load_all_pdfs():
     combined_text = ""
@@ -34,17 +31,10 @@ def load_all_pdfs():
 
 pdf_context_data = load_all_pdfs()
 
-# Debug: PDF එකෙන් අකුරු කියවුණාද කියා පරීක්ෂා කිරීම
-st.sidebar.header("⚙️ PDF Data Status")
-if pdf_context_data and len(pdf_context_data.strip()) > 50:
-    st.sidebar.success(f"✅ PDF සටහන් කියවන ලදී! ({len(pdf_context_data)} characters)")
-else:
-    st.sidebar.warning("⚠️ PDF එකේ සිංහල අකුරු කියවීමට නොහැකි විය (Font Encoding issue). AI එක දැනුමෙන් පමණක් උත්තර දෙයි.")
-
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ඕනෑම ප්‍රශ්නයක් අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ප්‍රාථමික පරිවෘත්තජ, SFT මාන, IP ලිපින...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ද්විතීයික පරිවෘත්තජ, SFT මාන, IP ලිපින...")
 
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -52,24 +42,27 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If the user asks who made/created/developed you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
+STRICT MARKDOWN TABLE FORMATTING RULE:
+- Whenever presenting data that involves compounds, sources, uses, functions, components, or comparisons (such as Secondary Metabolites: සංයෝග, ප්‍රභව, ප්‍රයෝජන), YOU MUST ALWAYS OUTPUT THE DATA IN A CLEAN MARKDOWN TABLE (| සංයෝගය | ප්‍රභවය | ප්‍රයෝජන |).
+- DO NOT convert tabular PDF data into general text paragraphs or bullet points. Preserve table structures.
+
 STRICT PDF-FIRST RULE:
-- IF "Syllabus Context" is provided below, your HIGHEST PRIORITY is to answer STRICTLY using the definitions, bullet points, and examples given in that context.
-- Match definitions EXACTLY as presented in the Sri Lankan A/L Teacher Resource Book / Syllabus (e.g. For primary metabolites, emphasize survival, growth, development, reproduction, and examples like sucrose, ethanol, lactic acid if mentioned).
+- Answer strictly using the definitions, tables, and details provided in the uploaded PDF / Syllabus Context.
 
 ANSWER STYLE:
 - Accurate examination-standard Sinhala (සිංහල).
-- Structured bullet points.
-- NO sentence repetitions or infinite loops.
-- NEVER display source citations or chapter numbers at the end.
+- Use Markdown Tables for all structured/tabular data.
+- NO sentence repetition loops.
+- NEVER display source citations, page numbers, or chapter references at the end.
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("PDF සටහන් සහ AI දත්ත විශ්ලේෂණය කරමින් පවතී..."):
+        with st.spinner("සටහන් විශ්ලේෂණය කර වගු සකසමින් පවතී..."):
             try:
                 final_user_prompt = user_input
                 if pdf_context_data and len(pdf_context_data.strip()) > 50:
-                    truncated_context = pdf_context_data[:7000]
+                    truncated_context = pdf_context_data[:8000]
                     final_user_prompt = f"Official Syllabus Context (PDF):\n{truncated_context}\n\nUser Question: {user_input}"
 
                 model_name = "openrouter/deepseek/deepseek-chat" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
