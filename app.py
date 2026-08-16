@@ -4,7 +4,7 @@ import os
 import glob
 from pypdf import PdfReader
 
-# 1. Browser Tab Config
+# Page Setup
 st.set_page_config(page_title="TECH gpt - A/L Guru", page_icon="logo.png")
 
 # API Keys පරීක්ෂාව
@@ -14,12 +14,11 @@ elif "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 # ---------------------------------------------------------
-# Repo එකේ තියෙන සියලුම PDF ස්වයංක්‍රීයව කියවා ගැනීම
+# PDF කියවා පිරිසිදු කරගැනීම
 # ---------------------------------------------------------
 @st.cache_data
 def load_all_pdfs():
     combined_text = ""
-    # Root folder එකේ සහ pdfs folder එකේ තියෙන සියලුම .pdf සොයා ගැනීම
     pdf_files = glob.glob("*.pdf") + glob.glob("pdfs/*.pdf")
     
     for pdf_file in pdf_files:
@@ -27,7 +26,7 @@ def load_all_pdfs():
             reader = PdfReader(pdf_file)
             for page in reader.pages:
                 text = page.extract_text()
-                if text:
+                if text and len(text.strip()) > 10:
                     combined_text += text + "\n"
         except Exception as e:
             print(f"Error reading {pdf_file}: {e}")
@@ -39,43 +38,36 @@ pdf_context_data = load_all_pdfs()
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** විෂයයන්ට අදාළ ඕනෑම ප්‍රශ්නයක් අසන්න:")
 
-user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ද්විතීයික පරිවෘත්තජ, SFT මාන, IP ලිපින...")
+user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: ප්‍රාථමික පරිවෘත්තජ, SFT මාන, IP ලිපින...")
 
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
 
 CREATOR IDENTITY RULE:
-- If the user asks who made/created/developed you (e.g., "ඔයාව හැදුවේ කවුද?"), reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
+- If the user asks who made/created/developed you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-RESOURCE KNOWLEDGE RULE:
-- You are provided with embedded A/L notes and Syllabus/Resource Book context from uploaded PDFs.
-- Always combine the embedded PDF knowledge with official Sri Lankan A/L Technology syllabus principles to formulate the answer.
+STRICT REPETITION PREVENT RULE:
+- NEVER repeat the exact same sentence or definition under different bullet points.
+- Every single bullet point MUST contain unique, distinct, and exam-relevant academic points.
 
-CORE INSTRUCTIONS:
-1. FLEXIBLE TECH SUBJECT COVERAGE:
-   - Accept ALL Sri Lankan A/L Tech stream terms (ET, SFT, BST, ICT).
-   - Do NOT be overly strict. Assume any engineering, scientific, or tech phrase belongs to the A/L Tech syllabus.
+ANSWER STYLE:
+- Write accurate A/L examination-standard Sinhala (සිංහල).
+- Use embedded PDF context combined with official NIE A/L syllabus principles.
+- NEVER show source notes, chapter numbers, or references at the end.
 
-2. ANSWER STYLE:
-   - Write in clear, accurate, examination-standard Sinhala (සිංහල).
-   - Provide direct, structured bullet points with clear explanations.
-   - NO sentence repetitions or infinite loops.
-   - NEVER show source notes, chapter numbers, citations, or book references at the end.
-
-3. REFUSAL RULE (ONLY FOR COMPLETELY UNRELATED TOPICS):
-   - Refuse ONLY if the prompt is CLEARLY about everyday non-academic topics (e.g., cooking, movies, gossip).
-   - If refusing, reply ONLY:
-     "කණගාටුයි, මට පිළිතුරු දිය හැක්කේ ශ්‍රී ලංකාවේ උසස් පෙළ (A/L) තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්නවලට පමණයි."
+REFUSAL RULE:
+- Refuse ONLY non-academic topics like movies, cooking, gossip.
 """
 
 if st.button("පිළිතුර ලබාගන්න"):
     if user_input:
-        with st.spinner("සටහන් සහ AI දත්ත විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("විද්‍යාත්මක හා තාක්ෂණික දත්ත විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
                 final_user_prompt = user_input
-                if pdf_context_data:
-                    truncated_context = pdf_context_data[:10000]
-                    final_user_prompt = f"Uploaded Syllabus/Resource Context:\n{truncated_context}\n\nStudent Question: {user_input}"
+                # PDF දත්ත සීමිත ප්‍රමාණයකට එකතු කිරීම (AI එක ඩම්ප් වීම වැළැක්වීමට)
+                if pdf_context_data and len(pdf_context_data) > 50:
+                    truncated_context = pdf_context_data[:5000]
+                    final_user_prompt = f"Syllabus Context:\n{truncated_context}\n\nQuestion: {user_input}"
 
                 model_name = "openrouter/deepseek/deepseek-chat" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
                 
@@ -85,7 +77,9 @@ if st.button("පිළිතුර ලබාගන්න"):
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": final_user_prompt}
                     ],
-                    temperature=0.3
+                    temperature=0.3,
+                    frequency_penalty=0.6, # එකම පේළිය නැවත නැවත කීම 100% ක් නතර කරයි
+                    presence_penalty=0.4
                 )
                 
                 answer = response.choices[0].message.content
