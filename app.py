@@ -45,29 +45,29 @@ st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BS
 
 # Text Input Form
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය, හෝ කොහොඹ ගසේ වැදගත්කම...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: කොහොඹ ශාකයේ විද්‍යාත්මක නාමය, 5M සංකල්පය...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
-# System Prompt - Updated for Detailed Sinhala Explanations
+# System Prompt with Strict Scientific Name Verification
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
 
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-DETAILED ANSWERING RULES:
-- Provide clear, comprehensive, and detailed examination-standard Sinhala explanations.
-- Structure answers logically with:
-  1. Primary Answer / Definition (අර්ථදැක්වීම / ප්‍රධාන පිළිතුර)
-  2. Detailed Explanation (විස්තරාත්මක පැහැදිලි කිරීම)
-  3. Key Examples & Technical Terms (උදාහරණ සහ තාක්ෂණික පද - Bold වලින්)
-  4. Practical Applications / Marking Scheme Points (ප්‍රායෝගික භාවිත / ලකුණු දීමේ පටිපාටියට අදාළ කරුණු)
-- Use clear bullet points and structural spacing.
+STRICT SCIENTIFIC ACCURACY RULE:
+- You MUST strictly follow standard Sri Lankan A/L Biology / BST / SFT Resource Book facts.
+- Do NOT mix up scientific names. (e.g., Kohomba = Azadirachta indica, Kumbuk = Terminalia arjuna).
+
+ANSWER STRUCTURE:
+1. Direct Answer (නිවැරදි කෙටි පිළිතුර)
+2. Detailed Explanation (විෂය නිර්දේශයට අදාළ පැහැදිලි කිරීම)
+3. Key Scientific Terms & Families (විද්‍යාත්මක නාම සහ කුල)
 """
 
 if submit_button:
     if user_input.strip():
-        with st.spinner("විශ්ලේෂණය කර විස්තරාත්මක පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("විශ්ලේෂණය කර නිවැරදි පිළිතුර සකසමින් පවතී..."):
             try:
                 # PDF Context search
                 query_words = [w.lower() for w in user_input.split() if len(w) > 2]
@@ -77,7 +77,7 @@ if submit_button:
                 if relevant_pages:
                     context_text = "\n\n---\n\n".join(relevant_pages)[:10000]
 
-                user_content = f"Syllabus Context from PDFs:\n{context_text}\n\nUser Question: {user_input}\n\nPlease provide a full, detailed A/L exam-standard Sinhala answer."
+                user_content = f"Syllabus Context from PDFs:\n{context_text}\n\nUser Question: {user_input}\n\nProvide the exact, highly accurate Sri Lankan A/L exam Sinhala answer."
 
                 response = client.chat.completions.create(
                     model="deepseek/deepseek-chat",
@@ -85,12 +85,12 @@ if submit_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
                     ],
-                    temperature=0.2,
-                    max_tokens=1500
+                    temperature=0.0,  # 0.0 මගින් Fact errors සම්පූර්ණයෙන්ම වළක්වයි
+                    max_tokens=1000
                 )
 
                 answer = response.choices[0].message.content
-                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි විස්තරාත්මක පිළිතුර:")
+                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
                 st.markdown(answer)
 
             except Exception as e:
