@@ -62,14 +62,14 @@ CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
 CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-- Accurately read the exact Sinhala questions visible inside the attached image.
-- Solve ONLY those specific questions using Sri Lankan G.C.E. A/L marking schemes and accurate terminology.
+- Accurately read and transcribe the exact Sinhala questions visible in the attached image.
+- Solve ONLY those specific questions using official Sri Lankan G.C.E. A/L marking schemes.
 - Ignore background PDF syllabus context completely when an image is provided.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
 - Use clear bullet points and bold technical terms.
-- Do NOT use Markdown tables unless specifically requested or strictly necessary for comparison.
+- Do NOT use Markdown tables unless specifically requested or strictly necessary.
 """
 
 if submit_button:
@@ -78,7 +78,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Gemini 2.0 Flash via OpenRouter for 100% Perfect Sinhala OCR)
+                # 1. Image Mode (Gemini 1.5 Flash via OpenRouter for Sinhala OCR)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -104,9 +104,8 @@ if submit_button:
                         }
                     ]
 
-                    # OpenRouter හරහා සිංහල OCR සඳහා සාර්ථකම Model එක
                     response = client.chat.completions.create(
-                        model="google/gemini-2.0-flash-001",
+                        model="google/gemini-flash-1.5",
                         messages=messages,
                         temperature=0.1,
                         max_tokens=1000
