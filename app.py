@@ -36,17 +36,17 @@ def load_pdf_pages():
 pdf_pages = load_pdf_pages()
 
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
-st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** ප්‍රශ්න අසන්න, නැතහොත් ප්‍රශ්න පත්‍රයේ පින්තූරයක්/PDF එකක් Upload කරන්න:")
+st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** ප්‍රශ්න අසන්න, නැතහොත් ප්‍රශ්න පත්‍රයේ පින්තූරයක් Upload කරන්න:")
 
 # File Uploader
-uploaded_file = st.file_uploader("📸 ප්‍රශ්න පත්‍රයේ පින්තූරයක් (JPG/PNG) හෝ අමතර PDF එකක් එකතු කරන්න:", type=["png", "jpg", "jpeg", "pdf"])
+uploaded_file = st.file_uploader("📸 ප්‍රශ්න පත්‍රයේ පින්තූරයක් (JPG/PNG) හෝ PDF එකක් එකතු කරන්න:", type=["png", "jpg", "jpeg", "pdf"])
 
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න (පින්තූරයක් යෙදුවේ නම් එයට අදාළ සටහනක් තබන්න):", placeholder="උදා: ඕල්ඩුවායි වාදය, 5M සංකල්පය, හුක් නියමය...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය හෝ photo එකට අදාළ උපදෙස්...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 # ---------------------------------------------------------
-# System Prompt (Updated & Fixed Refusal Rules)
+# System Prompt
 # ---------------------------------------------------------
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -54,67 +54,36 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-SYLLABUS & DOMAIN VALIDATION (CRITICAL):
-- G.C.E. A/L Technology subjects (ET, SFT, BST, ICT) cover a vast area including:
-  * ET / BST: 5M concept (Man, Machine, Material, Method, Measurement), 5S, Total Quality Management (TQM), ISO standards, Safety, Workshop technology, Management, Economics, Agricultural Machinery, Post-harvest Tech.
-  * SFT: Olduvai theory, Energy crisis, Physics, Chemistry, Biology, Environmental Science, Soil science.
-  * ICT: Programming, Networking, Hardware, Databases, Logic gates.
-- DO NOT REFUSE these technical/management concepts! 5M, 5S, TQM, ISO are 100% VALID A/L TECH TOPICS.
-- Refuse ONLY if the topic is 100% non-educational and unrelated to school subjects (e.g., cinema gossip, political news, general entertainment).
-  * Refusal message: "කණගාටුයි! මට පිළිතුරු දිය හැක්කේ උසස් පෙළ තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්න සඳහා පමණයි."
+CRITICAL INSTRUCTION FOR IMAGE PROCESSING:
+- When an image is provided, READ THE EXACT TEXT AND QUESTIONS INSIDE THE IMAGE.
+- Answer ONLY the specific questions visible in the uploaded image.
+- Do NOT talk about unrelated topics. Focus entirely on solving the uploaded photo's content matching Sri Lankan A/L marking schemes.
 
-IMAGE PROCESSING INSTRUCTION:
-- If an image is uploaded, YOUR HIGHEST PRIORITY IS TO READ AND SOLVE THE EXACT QUESTION SHOWN IN THE IMAGE.
-
-ANSWERING RULES:
+FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
-- Match official Sri Lankan G.C.E. A/L marking scheme standard.
-- Use Markdown Tables (| අංගය | විස්තරය |) when presenting components, differences, or categorized lists.
+- Use Markdown Tables (| අංගය | විස්තරය |) when presenting components, differences, or lists.
 - Use clear bullet points and bold technical terms.
 """
 
 if submit_button:
     if user_input or uploaded_file:
-        with st.spinner("තොරතුරු විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
-                context_text = ""
                 is_image = uploaded_file and uploaded_file.type.startswith("image/")
 
-                # 1. Upload කළ PDF එකක් තිබේ නම්
-                if uploaded_file and uploaded_file.type == "application/pdf":
-                    try:
-                        custom_pdf_reader = PdfReader(uploaded_file)
-                        for page in custom_pdf_reader.pages:
-                            t = page.extract_text()
-                            if t: context_text += t + "\n"
-                    except Exception as e:
-                        st.error(f"PDF කියවීමේ දෝෂයක්: {e}")
-
-                # 2. Keyword Search (Server PDFs)
-                if user_input:
-                    stopwords = {"photo", "ekata", "adalawa", "uththara", "denna", "me", "mewa", "prashna", "uthtara", "thiyena"}
-                    query_words = [w.lower() for w in user_input.split() if len(w) > 2 and w.lower() not in stopwords]
-                    
-                    relevant_pages = []
-                    if query_words:
-                        relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
-                    
-                    if relevant_pages:
-                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
-
-                # Prompt සකස් කිරීම
-                if is_image:
-                    final_prompt_text = f"CRITICAL TASK: Carefully read the uploaded image and solve the exact questions inside it.\nUser instructions: {user_input if user_input else 'මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව පිළිතුරු සපයන්න.'}"
-                    if context_text.strip():
-                        final_prompt_text += f"\n\nSyllabus Reference Context:\n{context_text}"
-                else:
-                    final_prompt_text = f"Official Syllabus Context (PDF):\n{context_text}\n\nUser Prompt: {user_input}"
-
-                # Model තේරීම
+                # ---------------------------------------------------------
+                # 1. PHOTO MODE (PDF Context 100% Bypass කරයි)
+                # ---------------------------------------------------------
                 if is_image:
                     base64_image = base64.b64encode(uploaded_file.read()).decode('utf-8')
+                    
+                    prompt_instruction = user_input if user_input and len(user_input.strip()) > 0 else "මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව නිවැරදි උත්තර සපයන්න."
+                    
                     user_content = [
-                        {"type": "text", "text": final_prompt_text},
+                        {
+                            "type": "text", 
+                            "text": f"IMPORTANT: Read the attached photo carefully and answer the EXACT questions shown inside it.\nUser Instruction: {prompt_instruction}"
+                        },
                         {
                             "type": "image_url",
                             "image_url": {
@@ -123,16 +92,34 @@ if submit_button:
                         }
                     ]
                     
-                    if "OPENROUTER_API_KEY" in os.environ:
-                        model_name = "openrouter/openai/gpt-4o-mini"
-                    else:
-                        model_name = "groq/llama-3.2-11b-vision-instruct"
+                    model_name = "openrouter/openai/gpt-4o-mini" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.2-11b-vision-instruct"
+
+                # ---------------------------------------------------------
+                # 2. TEXT / PDF MODE (Photo නොමැති විට පමණක් ක්‍රියාත්මක වේ)
+                # ---------------------------------------------------------
                 else:
-                    user_content = final_prompt_text
-                    if "OPENROUTER_API_KEY" in os.environ:
-                        model_name = "openrouter/openai/gpt-4o-mini"
-                    else:
-                        model_name = "groq/llama-3.3-70b-versatile"
+                    context_text = ""
+                    
+                    # Upload කළ PDF එකක් නම්
+                    if uploaded_file and uploaded_file.type == "application/pdf":
+                        try:
+                            custom_pdf_reader = PdfReader(uploaded_file)
+                            for page in custom_pdf_reader.pages:
+                                t = page.extract_text()
+                                if t: context_text += t + "\n"
+                        except Exception as e:
+                            st.error(f"PDF කියවීමේ දෝෂයක්: {e}")
+
+                    # Server PDF Search
+                    if user_input:
+                        query_words = [w.lower() for w in user_input.split() if len(w) > 2]
+                        relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
+                        
+                        if relevant_pages:
+                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
+
+                    user_content = f"Official Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
+                    model_name = "openrouter/openai/gpt-4o-mini" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
 
                 # API Call
                 response = completion(
@@ -141,16 +128,13 @@ if submit_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
                     ],
-                    temperature=0.2
+                    temperature=0.1
                 )
                 
                 answer = response.choices[0].message.content
-                
-                if "කණගාටුයි!" in answer and len(answer) < 150:
-                    st.warning(answer)
-                else:
-                    st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
-                    st.markdown(answer)
+                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
+                st.markdown(answer)
+
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
     else:
