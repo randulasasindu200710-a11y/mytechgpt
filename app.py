@@ -11,7 +11,7 @@ st.set_page_config(page_title="TECH gpt - A/L Guru", page_icon="logo.png")
 api_key = st.secrets.get("OPENROUTER_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
 
 if not api_key:
-    st.error("කරුණාකර OPENROUTER_API_KEY එක Secrets වලට ඇතුළත් කරන්න.")
+    st.error("කරුණාකර OPENROUTER_API_KEY එක Streamlit Secrets වලට ඇතුළත් කරන්න.")
     st.stop()
 
 client = OpenAI(
@@ -62,14 +62,15 @@ CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
 CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-- Transcribe the exact Sinhala text and question numbers written in the image first.
-- Solve ONLY those exact questions matching official Sri Lankan G.C.E. A/L marking schemes.
-- Never hallucinate unrelated questions.
+- Carefully read and transcribe the exact Sinhala text and question numbers inside the uploaded image.
+- Solve ONLY the specific questions visible in the image matching official Sri Lankan G.C.E. A/L marking schemes.
+- Do NOT hallucinate or output unrelated general topics.
+- Ignore background PDF syllabus context completely when an image is provided.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
-- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing two things or presenting specific components. Otherwise, use bullet points.
-- Use clear bullet points and bold key technical terms.
+- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing two items or listing multi-attribute structured data. Otherwise, use clear bullet points.
+- Use bold text for technical terms.
 """
 
 if submit_button:
@@ -78,7 +79,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Gemini 1.5 Flash - Best Sinhala OCR)
+                # 1. Image Mode (Anthropic Claude 3.5 Sonnet for High-Precision Sinhala Vision/OCR)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -92,7 +93,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Accurately read the Sinhala text in this image and answer the questions.\nUser Note: {user_instruction}"
+                                    "text": f"Read the Sinhala text in this image accurately and solve the exact questions inside it.\nUser Note: {user_instruction}"
                                 },
                                 {
                                     "type": "image_url",
@@ -104,14 +105,13 @@ if submit_button:
                         }
                     ]
 
-                    # OpenRouter හි සිංහල අකුරු හොඳින්ම කියවන Model එක
                     response = client.chat.completions.create(
-                        model="google/gemini-flash-1.5",
+                        model="anthropic/claude-3.5-sonnet",
                         messages=messages,
                         temperature=0.1
                     )
 
-                # 2. Text / PDF Mode
+                # 2. Text / PDF Mode (DeepSeek Chat)
                 else:
                     context_text = ""
                     if uploaded_file and uploaded_file.type == "application/pdf":
