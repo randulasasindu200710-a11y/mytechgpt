@@ -79,7 +79,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (OpenAI GPT-4o for High Precision Sinhala OCR on OpenRouter)
+                # 1. Image Mode (OpenAI GPT-4o with max_tokens set)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -105,11 +105,12 @@ if submit_button:
                         }
                     ]
 
-                    # OpenRouter හි නිවැරදිව වැඩකරන GPT-4o Vision Model එක
+                    # max_tokens=1000 මගින් Credits වැය වීම පාලනය කරයි
                     response = client.chat.completions.create(
                         model="openai/gpt-4o",
                         messages=messages,
-                        temperature=0.1
+                        temperature=0.1,
+                        max_tokens=1000
                     )
 
                 # 2. Text / PDF Mode
@@ -138,7 +139,8 @@ if submit_button:
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_content}
                         ],
-                        temperature=0.2
+                        temperature=0.2,
+                        max_tokens=1000
                     )
 
                 answer = response.choices[0].message.content
