@@ -42,11 +42,11 @@ st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BS
 uploaded_file = st.file_uploader("📸 ප්‍රශ්න පත්‍රයේ පින්තූරයක් (JPG/PNG) හෝ අමතර PDF එකක් එකතු කරන්න:", type=["png", "jpg", "jpeg", "pdf"])
 
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න (පින්තූරයක් යෙදුවේ නම් එයට අදාළ සටහනක් තබන්න):", placeholder="උදා: ඕල්ඩුවායි වාදය, 5M සංකල්පය, හෝ 'මෙම රූපයේ ප්‍රශ්නයට උත්තර දෙන්න'...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න (පින්තූරයක් යෙදුවේ නම් එයට අදාළ සටහනක් තබන්න):", placeholder="උදා: ඕල්ඩුවායි වාදය, 5M සංකල්පය, හුක් නියමය...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 # ---------------------------------------------------------
-# System Prompt
+# System Prompt (Updated & Fixed Refusal Rules)
 # ---------------------------------------------------------
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -54,30 +54,33 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-CRITICAL SYLLABUS DOMAIN & REFUSAL LOGIC:
-1. SFT, ET, BST include topics that sound like other subjects but ARE VALID.
-2. IF the user's concept is found in the provided PDF or uploaded image/file, YOU MUST NEVER REFUSE IT.
-3. Refuse ONLY if the topic is 100% outside the Tech Stream domain AND is not mentioned in any provided document/image. 
-   - Refusal message: "කණගාටුයි! මට පිළිතුරු දිය හැක්කේ උසස් පෙළ තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්න සඳහා පමණයි."
+SYLLABUS & DOMAIN VALIDATION (CRITICAL):
+- G.C.E. A/L Technology subjects (ET, SFT, BST, ICT) cover a vast area including:
+  * ET / BST: 5M concept (Man, Machine, Material, Method, Measurement), 5S, Total Quality Management (TQM), ISO standards, Safety, Workshop technology, Management, Economics, Agricultural Machinery, Post-harvest Tech.
+  * SFT: Olduvai theory, Energy crisis, Physics, Chemistry, Biology, Environmental Science, Soil science.
+  * ICT: Programming, Networking, Hardware, Databases, Logic gates.
+- DO NOT REFUSE these technical/management concepts! 5M, 5S, TQM, ISO are 100% VALID A/L TECH TOPICS.
+- Refuse ONLY if the topic is 100% non-educational and unrelated to school subjects (e.g., cinema gossip, political news, general entertainment).
+  * Refusal message: "කණගාටුයි! මට පිළිතුරු දිය හැක්කේ උසස් පෙළ තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්න සඳහා පමණයි."
 
-IMAGE PROCESSING INSTRUCTION (CRITICAL):
+IMAGE PROCESSING INSTRUCTION:
 - If an image is uploaded, YOUR HIGHEST PRIORITY IS TO READ AND SOLVE THE EXACT QUESTION SHOWN IN THE IMAGE.
-- Do NOT hallucinate or answer unrelated PDF topics.
 
-FORMATTING RULES:
+ANSWERING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
-- Always use Markdown Tables (| අංගය | විස්තරය |) when presenting components, differences, or lists.
-- Use clear bullet points and bold key Sri Lankan technical terms.
+- Match official Sri Lankan G.C.E. A/L marking scheme standard.
+- Use Markdown Tables (| අංගය | විස්තරය |) when presenting components, differences, or categorized lists.
+- Use clear bullet points and bold technical terms.
 """
 
 if submit_button:
     if user_input or uploaded_file:
-        with st.spinner("තොරතුරු හා පින්තූර විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("තොරතුරු විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
                 context_text = ""
                 is_image = uploaded_file and uploaded_file.type.startswith("image/")
 
-                # 1. පරිශීලකයා අලුතින් PDF එකක් Upload කර තිබේ නම්
+                # 1. Upload කළ PDF එකක් තිබේ නම්
                 if uploaded_file and uploaded_file.type == "application/pdf":
                     try:
                         custom_pdf_reader = PdfReader(uploaded_file)
@@ -87,7 +90,7 @@ if submit_button:
                     except Exception as e:
                         st.error(f"PDF කියවීමේ දෝෂයක්: {e}")
 
-                # 2. Server එකේ ඇති PDF වලින් Keyword සෙවීම (Photo එකක් නැති විට පමණක් අදාළ වේ)
+                # 2. Keyword Search (Server PDFs)
                 if user_input:
                     stopwords = {"photo", "ekata", "adalawa", "uththara", "denna", "me", "mewa", "prashna", "uthtara", "thiyena"}
                     query_words = [w.lower() for w in user_input.split() if len(w) > 2 and w.lower() not in stopwords]
@@ -98,9 +101,6 @@ if submit_button:
                     
                     if relevant_pages:
                         context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
-                    elif not is_image:
-                        # Photo එකක් නැතිව Text විතරක් අහද්දි විතරක් PDF ඔක්කොම සෙවීම
-                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(pdf_pages)[:15000]
 
                 # Prompt සකස් කිරීම
                 if is_image:
@@ -130,7 +130,7 @@ if submit_button:
                 else:
                     user_content = final_prompt_text
                     if "OPENROUTER_API_KEY" in os.environ:
-                        model_name = "openrouter/deepseek/deepseek-chat"
+                        model_name = "openrouter/openai/gpt-4o-mini"
                     else:
                         model_name = "groq/llama-3.3-70b-versatile"
 
@@ -141,12 +141,12 @@ if submit_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
                     ],
-                    temperature=0.1
+                    temperature=0.2
                 )
                 
                 answer = response.choices[0].message.content
                 
-                if "කණගාටුයි!" in answer:
+                if "කණගාටුයි!" in answer and len(answer) < 150:
                     st.warning(answer)
                 else:
                     st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
