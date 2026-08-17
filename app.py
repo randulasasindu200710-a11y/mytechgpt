@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import glob
 import base64
+import io
+from PIL import Image
 from pypdf import PdfReader
 from openai import OpenAI
 
@@ -60,12 +62,15 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Simplified prompt to prevent Safety Refusal)
+                # 1. Image Mode (Using PIL to guarantee valid Image Base64)
                 if is_image:
-                    image_bytes = uploaded_file.getvalue()
-                    base64_image = base64.b64encode(image_bytes).decode('utf-8')
+                    # PIL හරහා Image එක Standard JPEG බවට පත්කිරීම
+                    raw_image = Image.open(uploaded_file).convert("RGB")
+                    buffered = io.BytesIO()
+                    raw_image.save(buffered, format="JPEG")
+                    base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-                    img_system_prompt = "You are a helpful Sri Lankan G.C.E. A/L Technology teacher. Read the Sinhala questions in the image and write precise answers in Sinhala."
+                    img_system_prompt = "You are a Sri Lankan A/L Technology teacher. Carefully inspect the Sinhala question image and provide short, accurate exam answers in Sinhala."
 
                     messages = [
                         {"role": "system", "content": img_system_prompt},
@@ -74,12 +79,12 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": "Solve the questions given in this Sri Lankan A/L exam paper image accurately in Sinhala."
+                                    "text": "Answer the Sinhala questions shown in this image accurately."
                                 },
                                 {
                                     "type": "image_url",
                                     "image_url": {
-                                        "url": f"data:{uploaded_file.type};base64,{base64_image}"
+                                        "url": f"data:image/jpeg;base64,{base64_image}"
                                     }
                                 }
                             ]
@@ -90,7 +95,7 @@ if submit_button:
                         model="openai/gpt-4o-mini",
                         messages=messages,
                         temperature=0.2,
-                        max_tokens=600
+                        max_tokens=700
                     )
 
                 # 2. Text / PDF Mode
