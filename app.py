@@ -69,8 +69,8 @@ CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
-- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing two items or listing multi-attribute structured data. Otherwise, use clear bullet points.
-- Use bold text for technical terms.
+- Use clear bullet points and bold technical terms.
+- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing items or organizing structured data.
 """
 
 if submit_button:
@@ -79,7 +79,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Anthropic Claude 3.5 Sonnet for High-Precision Sinhala Vision/OCR)
+                # 1. Image Mode (OpenAI GPT-4o for High Precision Sinhala OCR on OpenRouter)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -105,13 +105,14 @@ if submit_button:
                         }
                     ]
 
+                    # OpenRouter හි නිවැරදිව වැඩකරන GPT-4o Vision Model එක
                     response = client.chat.completions.create(
-                        model="anthropic/claude-3.5-sonnet",
+                        model="openai/gpt-4o",
                         messages=messages,
                         temperature=0.1
                     )
 
-                # 2. Text / PDF Mode (DeepSeek Chat)
+                # 2. Text / PDF Mode
                 else:
                     context_text = ""
                     if uploaded_file and uploaded_file.type == "application/pdf":
