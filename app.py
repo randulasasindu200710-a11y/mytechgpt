@@ -7,7 +7,7 @@ from openai import OpenAI
 
 st.set_page_config(page_title="TECH gpt - A/L Guru", page_icon="logo.png")
 
-# OpenRouter Client එක සෘජුවම Setup කිරීම
+# OpenRouter Client Setup
 api_key = st.secrets.get("OPENROUTER_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
 
 if not api_key:
@@ -61,16 +61,15 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-CRITICAL INSTRUCTION FOR IMAGES:
-- Read and transcribe the EXACT questions written in the provided image.
-- Solve ONLY those specific questions shown in the image according to official A/L marking schemes.
-- Do NOT say "I am unable to view images". You CAN see the image clearly.
-- Ignore external PDF syllabus context if an image is uploaded.
+CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
+- Transcribe the exact Sinhala text and question numbers written in the image first.
+- Solve ONLY those exact questions matching official Sri Lankan G.C.E. A/L marking schemes.
+- Never hallucinate unrelated questions.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
-- Use Markdown Tables (| අංගය | විස්තරය |) when presenting components, differences, or lists.
-- Use clear bullet points and bold technical terms.
+- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing two things or presenting specific components. Otherwise, use bullet points.
+- Use clear bullet points and bold key technical terms.
 """
 
 if submit_button:
@@ -79,12 +78,12 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image තිබේ නම් (Direct OpenRouter Vision Request)
+                # 1. Image Mode (Gemini 1.5 Flash - Best Sinhala OCR)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
                     
-                    user_instruction = user_input.strip() if user_input and user_input.strip() else "මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව පිළිතුරු සපයන්න."
+                    user_instruction = user_input.strip() if user_input and user_input.strip() else "මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව නිවැරදි උත්තර සපයන්න."
 
                     messages = [
                         {"role": "system", "content": system_prompt},
@@ -93,7 +92,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Read the attached image carefully and answer the EXACT questions inside it.\nUser Instruction: {user_instruction}"
+                                    "text": f"Accurately read the Sinhala text in this image and answer the questions.\nUser Note: {user_instruction}"
                                 },
                                 {
                                     "type": "image_url",
@@ -105,13 +104,14 @@ if submit_button:
                         }
                     ]
 
+                    # OpenRouter හි සිංහල අකුරු හොඳින්ම කියවන Model එක
                     response = client.chat.completions.create(
-                        model="openai/gpt-4o-mini",
+                        model="google/gemini-flash-1.5",
                         messages=messages,
                         temperature=0.1
                     )
 
-                # 2. Text / PDF පමණක් තිබේ නම්
+                # 2. Text / PDF Mode
                 else:
                     context_text = ""
                     if uploaded_file and uploaded_file.type == "application/pdf":
