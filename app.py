@@ -1,17 +1,23 @@
 import streamlit as st
-from litellm import completion
 import os
 import glob
 import base64
 from pypdf import PdfReader
+from openai import OpenAI
 
 st.set_page_config(page_title="TECH gpt - A/L Guru", page_icon="logo.png")
 
-# API Keys
-if "OPENROUTER_API_KEY" in st.secrets:
-    os.environ["OPENROUTER_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
-elif "GROQ_API_KEY" in st.secrets:
-    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+# OpenRouter Client එක සෘජුවම Setup කිරීම
+api_key = st.secrets.get("OPENROUTER_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+
+if not api_key:
+    st.error("කරුණාකර OPENROUTER_API_KEY එක Secrets වලට ඇතුළත් කරන්න.")
+    st.stop()
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=api_key,
+)
 
 # ---------------------------------------------------------
 # PDF කියවා පිටු වශයෙන් ගබඩා කිරීම
@@ -41,12 +47,11 @@ st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BS
 # File Uploader
 uploaded_file = st.file_uploader("📸 ප්‍රශ්න පත්‍රයේ පින්තූරයක් (JPG/PNG) හෝ PDF එකක් එකතු කරන්න:", type=["png", "jpg", "jpeg", "pdf"])
 
-# Upload කළ Photo එක Preview පෙන්වීම
 if uploaded_file and uploaded_file.type.startswith("image/"):
     st.image(uploaded_file, caption="Upload කරන ලද ප්‍රශ්න පත්‍රය", use_container_width=True)
 
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: photo එකේ ප්‍රශ්නයට උත්තර දෙන්න / 5M සංකල්පය...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය හෝ photo එකට අදාළ උපදෙස්...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 # System Prompt
@@ -59,7 +64,8 @@ CREATOR IDENTITY RULE:
 CRITICAL INSTRUCTION FOR IMAGES:
 - Read and transcribe the EXACT questions written in the provided image.
 - Solve ONLY those specific questions shown in the image according to official A/L marking schemes.
-- Ignore all other external PDF syllabus context if an image is provided.
+- Do NOT say "I am unable to view images". You CAN see the image clearly.
+- Ignore external PDF syllabus context if an image is uploaded.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
@@ -73,21 +79,21 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
+                # 1. Image තිබේ නම් (Direct OpenRouter Vision Request)
                 if is_image:
-                    # getvalue() භාවිතයෙන් රූපයේ සියලු දත්ත නිවැරදිව ලබා ගැනීම
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
                     
-                    user_instruction = user_input if user_input.strip() else "මෙම පින්තූරයේ ඇති ප්‍රශ්නයට A/L Marking Scheme එකට අනුව උත්තර සපයන්න."
-                    
-                    messages_payload = [
+                    user_instruction = user_input.strip() if user_input and user_input.strip() else "මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව පිළිතුරු සපයන්න."
+
+                    messages = [
                         {"role": "system", "content": system_prompt},
                         {
                             "role": "user",
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Read the attached image and solve the exact question inside it.\nUser Instruction: {user_instruction}"
+                                    "text": f"Read the attached image carefully and answer the EXACT questions inside it.\nUser Instruction: {user_instruction}"
                                 },
                                 {
                                     "type": "image_url",
@@ -98,15 +104,14 @@ if submit_button:
                             ]
                         }
                     ]
-                    
-                    model_name = "openrouter/openai/gpt-4o-mini" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.2-11b-vision-instruct"
 
-                    response = completion(
-                        model=model_name,
-                        messages=messages_payload,
+                    response = client.chat.completions.create(
+                        model="openai/gpt-4o-mini",
+                        messages=messages,
                         temperature=0.1
                     )
 
+                # 2. Text / PDF පමණක් තිබේ නම්
                 else:
                     context_text = ""
                     if uploaded_file and uploaded_file.type == "application/pdf":
@@ -125,10 +130,9 @@ if submit_button:
                             context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
 
                     user_content = f"Official Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
-                    model_name = "openrouter/openai/gpt-4o-mini" if "OPENROUTER_API_KEY" in os.environ else "groq/llama-3.3-70b-versatile"
 
-                    response = completion(
-                        model=model_name,
+                    response = client.chat.completions.create(
+                        model="deepseek/deepseek-chat",
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_content}
