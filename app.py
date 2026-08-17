@@ -62,14 +62,14 @@ CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
 CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-- Accurately read and transcribe the exact Sinhala questions visible in the attached image.
-- Solve ONLY those specific questions using official Sri Lankan G.C.E. A/L marking schemes.
-- Ignore background PDF syllabus context completely when an image is provided.
+- Transcribe the exact Sinhala text and numbers inside the attached image first.
+- Answer ONLY the specific questions visible in the uploaded image using Sri Lankan G.C.E. A/L marking schemes.
+- Ignore background PDF syllabus content completely when an image is uploaded.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
 - Use clear bullet points and bold technical terms.
-- Do NOT use Markdown tables unless specifically requested or strictly necessary.
+- Do NOT use Markdown tables unless strictly necessary.
 """
 
 if submit_button:
@@ -78,7 +78,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Gemini 1.5 Flash via OpenRouter for Sinhala OCR)
+                # 1. Image Mode (Qwen 2 VL via OpenRouter)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -92,7 +92,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Read the Sinhala questions in this image accurately and answer them.\nUser Instruction: {user_instruction}"
+                                    "text": f"Read the Sinhala questions written inside this image carefully and answer each question numbered correctly.\nUser Instruction: {user_instruction}"
                                 },
                                 {
                                     "type": "image_url",
@@ -104,8 +104,9 @@ if submit_button:
                         }
                     ]
 
+                    # OpenRouter Qwen-2-VL Model (Low Credit Cost & Excellent OCR)
                     response = client.chat.completions.create(
-                        model="google/gemini-flash-1.5",
+                        model="qwen/qwen-2-vl-72b-instruct",
                         messages=messages,
                         temperature=0.1,
                         max_tokens=1000
