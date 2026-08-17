@@ -62,29 +62,26 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Using PIL to guarantee valid Image Base64)
+                # 1. Image Mode (OpenRouter Fixed Payload)
                 if is_image:
-                    # PIL හරහා Image එක Standard JPEG බවට පත්කිරීම
                     raw_image = Image.open(uploaded_file).convert("RGB")
                     buffered = io.BytesIO()
                     raw_image.save(buffered, format="JPEG")
                     base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-                    img_system_prompt = "You are a Sri Lankan A/L Technology teacher. Carefully inspect the Sinhala question image and provide short, accurate exam answers in Sinhala."
-
                     messages = [
-                        {"role": "system", "content": img_system_prompt},
                         {
                             "role": "user",
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": "Answer the Sinhala questions shown in this image accurately."
+                                    "text": "You are a Sri Lankan A/L Technology Stream Master Teacher. Look at the attached image carefully, read the Sinhala sub-questions, and write precise, correct Sinhala answers for each numbered question."
                                 },
                                 {
                                     "type": "image_url",
                                     "image_url": {
-                                        "url": f"data:image/jpeg;base64,{base64_image}"
+                                        "url": f"data:image/jpeg;base64,{base64_image}",
+                                        "detail": "high"
                                     }
                                 }
                             ]
@@ -94,8 +91,8 @@ if submit_button:
                     response = client.chat.completions.create(
                         model="openai/gpt-4o-mini",
                         messages=messages,
-                        temperature=0.2,
-                        max_tokens=700
+                        temperature=0.1,
+                        max_tokens=800
                     )
 
                 # 2. Text / PDF Mode
