@@ -51,7 +51,7 @@ if uploaded_file and uploaded_file.type.startswith("image/"):
     st.image(uploaded_file, caption="Upload කරන ලද ප්‍රශ්න පත්‍රය", use_container_width=True)
 
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය හෝ photo එකට අදාළ උපදෙස්...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය හෝ photo එකට අදාළ උපදෙස්...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 # System Prompt
@@ -61,15 +61,15 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-- Transcribe the exact Sinhala text and numbers inside the attached image first.
-- Answer ONLY the specific questions visible in the uploaded image using Sri Lankan G.C.E. A/L marking schemes.
-- Ignore background PDF syllabus content completely when an image is uploaded.
+CRITICAL INSTRUCTION:
+- If an image is provided, focus ONLY on solving the exact Sinhala questions visible inside the image.
+- Do NOT repeat sentences or write endless text loops. Write direct, structured answers.
+- Use official Sri Lankan G.C.E. A/L marking schemes.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
+- Answer question by question using numbers (i, ii, iii, iv, v).
 - Use clear bullet points and bold technical terms.
-- Do NOT use Markdown tables unless strictly necessary.
 """
 
 if submit_button:
@@ -78,13 +78,11 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Qwen 2 VL via OpenRouter)
+                # 1. Image Mode
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
                     
-                    user_instruction = user_input.strip() if user_input and user_input.strip() else "මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව නිවැරදි උත්තර සපයන්න."
-
                     messages = [
                         {"role": "system", "content": system_prompt},
                         {
@@ -92,7 +90,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Read the Sinhala questions written inside this image carefully and answer each question numbered correctly.\nUser Instruction: {user_instruction}"
+                                    "text": "Please read the questions in this attached image carefully and provide the correct Sri Lankan A/L marking scheme answers for each numbered sub-question in Sinhala."
                                 },
                                 {
                                     "type": "image_url",
@@ -104,12 +102,13 @@ if submit_button:
                         }
                     ]
 
-                    # OpenRouter Qwen-2-VL Model (Low Credit Cost & Excellent OCR)
+                    # repetition_penalty එකතු කර Loop වීම නවතා ඇත
                     response = client.chat.completions.create(
                         model="qwen/qwen-2-vl-72b-instruct",
                         messages=messages,
-                        temperature=0.1,
-                        max_tokens=1000
+                        temperature=0.2,
+                        max_tokens=800,
+                        extra_body={"repetition_penalty": 1.18}
                     )
 
                 # 2. Text / PDF Mode
@@ -128,7 +127,7 @@ if submit_button:
                         query_words = [w.lower() for w in user_input.split() if len(w) > 2]
                         relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
                         if relevant_pages:
-                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
+                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:8000]
 
                     user_content = f"Official Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
 
