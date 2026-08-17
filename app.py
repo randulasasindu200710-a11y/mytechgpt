@@ -54,42 +54,27 @@ with st.form(key="chat_form"):
     user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය හෝ photo එකට අදාළ උපදෙස්...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
-# System Prompt
-system_prompt = """
-You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
-
-CREATOR IDENTITY RULE:
-- If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
-
-CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-1. Carefully read and internally translate/transcribe the exact Sinhala questions visible in the image.
-2. Provide precise, short, and accurate exam-standard Sinhala answers based on official Sri Lankan G.C.E. A/L marking schemes.
-3. NEVER repeat words, sentences, or phrases in loops.
-
-FORMATTING RULES:
-- Answer sub-questions directly using numbers like (i), (ii), (iii), (iv), (v).
-- Use accurate examination Sinhala terminology.
-"""
-
 if submit_button:
     if user_input or uploaded_file:
         with st.spinner("විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (Using GPT-4o-Mini via OpenRouter with Penalty Controls)
+                # 1. Image Mode (Simplified prompt to prevent Safety Refusal)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
 
+                    img_system_prompt = "You are a helpful Sri Lankan G.C.E. A/L Technology teacher. Read the Sinhala questions in the image and write precise answers in Sinhala."
+
                     messages = [
-                        {"role": "system", "content": system_prompt},
+                        {"role": "system", "content": img_system_prompt},
                         {
                             "role": "user",
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": "Transcribe the Sinhala questions in this image accurately and write the correct A/L marking scheme answer for each sub-question numbered clearly."
+                                    "text": "Solve the questions given in this Sri Lankan A/L exam paper image accurately in Sinhala."
                                 },
                                 {
                                     "type": "image_url",
@@ -101,18 +86,20 @@ if submit_button:
                         }
                     ]
 
-                    # frequency_penalty සහ presence_penalty මගින් Looping වැළැක්වීම
                     response = client.chat.completions.create(
                         model="openai/gpt-4o-mini",
                         messages=messages,
-                        temperature=0.1,
-                        max_tokens=800,
-                        frequency_penalty=0.5,
-                        presence_penalty=0.5
+                        temperature=0.2,
+                        max_tokens=600
                     )
 
                 # 2. Text / PDF Mode
                 else:
+                    text_system_prompt = """
+You are an expert Sri Lankan A/L Technology teacher.
+If asked who made you: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
+Write accurate examination Sinhala.
+"""
                     context_text = ""
                     if uploaded_file and uploaded_file.type == "application/pdf":
                         try:
@@ -127,14 +114,14 @@ if submit_button:
                         query_words = [w.lower() for w in user_input.split() if len(w) > 2]
                         relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
                         if relevant_pages:
-                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
+                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:8000]
 
-                    user_content = f"Official Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
+                    user_content = f"Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
 
                     response = client.chat.completions.create(
                         model="deepseek/deepseek-chat",
                         messages=[
-                            {"role": "system", "content": system_prompt},
+                            {"role": "system", "content": text_system_prompt},
                             {"role": "user", "content": user_content}
                         ],
                         temperature=0.2,
