@@ -61,15 +61,14 @@ You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Ma
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-CRITICAL INSTRUCTION:
-- If an image is provided, focus ONLY on solving the exact Sinhala questions visible inside the image.
-- Do NOT repeat sentences or write endless text loops. Write direct, structured answers.
-- Use official Sri Lankan G.C.E. A/L marking schemes.
+CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
+1. Carefully read and internally translate/transcribe the exact Sinhala questions visible in the image.
+2. Provide precise, short, and accurate exam-standard Sinhala answers based on official Sri Lankan G.C.E. A/L marking schemes.
+3. NEVER repeat words, sentences, or phrases in loops.
 
 FORMATTING RULES:
-- Write in accurate examination-standard Sinhala (සිංහල).
-- Answer question by question using numbers (i, ii, iii, iv, v).
-- Use clear bullet points and bold technical terms.
+- Answer sub-questions directly using numbers like (i), (ii), (iii), (iv), (v).
+- Use accurate examination Sinhala terminology.
 """
 
 if submit_button:
@@ -78,11 +77,11 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode
+                # 1. Image Mode (Using GPT-4o-Mini via OpenRouter with Penalty Controls)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
-                    
+
                     messages = [
                         {"role": "system", "content": system_prompt},
                         {
@@ -90,7 +89,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": "Please read the questions in this attached image carefully and provide the correct Sri Lankan A/L marking scheme answers for each numbered sub-question in Sinhala."
+                                    "text": "Transcribe the Sinhala questions in this image accurately and write the correct A/L marking scheme answer for each sub-question numbered clearly."
                                 },
                                 {
                                     "type": "image_url",
@@ -102,13 +101,14 @@ if submit_button:
                         }
                     ]
 
-                    # repetition_penalty එකතු කර Loop වීම නවතා ඇත
+                    # frequency_penalty සහ presence_penalty මගින් Looping වැළැක්වීම
                     response = client.chat.completions.create(
-                        model="qwen/qwen-2-vl-72b-instruct",
+                        model="openai/gpt-4o-mini",
                         messages=messages,
-                        temperature=0.2,
+                        temperature=0.1,
                         max_tokens=800,
-                        extra_body={"repetition_penalty": 1.18}
+                        frequency_penalty=0.5,
+                        presence_penalty=0.5
                     )
 
                 # 2. Text / PDF Mode
@@ -127,7 +127,7 @@ if submit_button:
                         query_words = [w.lower() for w in user_input.split() if len(w) > 2]
                         relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
                         if relevant_pages:
-                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:8000]
+                            context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
 
                     user_content = f"Official Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
 
