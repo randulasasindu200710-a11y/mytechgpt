@@ -38,7 +38,7 @@ pdf_pages = load_pdf_pages()
 st.title("🎓 TECH gpt - A/L Tech AI Guru 🧠")
 st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BST / ICT)** ප්‍රශ්න අසන්න, නැතහොත් ප්‍රශ්න පත්‍රයේ පින්තූරයක්/PDF එකක් Upload කරන්න:")
 
-# File Uploader එකතු කිරීම (Images සහ PDFs සඳහා)
+# File Uploader
 uploaded_file = st.file_uploader("📸 ප්‍රශ්න පත්‍රයේ පින්තූරයක් (JPG/PNG) හෝ අමතර PDF එකක් එකතු කරන්න:", type=["png", "jpg", "jpeg", "pdf"])
 
 with st.form(key="chat_form"):
@@ -46,7 +46,7 @@ with st.form(key="chat_form"):
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
 # ---------------------------------------------------------
-# Universal System Prompt
+# System Prompt
 # ---------------------------------------------------------
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
@@ -55,17 +55,14 @@ CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
 CRITICAL SYLLABUS DOMAIN & REFUSAL LOGIC:
-1. SFT, ET, BST include topics that sound like other subjects but ARE VALID. 
-   - Example: "ඕල්ඩුවායි වාදය" (Olduvai theory) IS A VALID SFT TOPIC related to energy crises and the decline of industrial civilization.
-   - Example: 5M, 5S, Economics, Management, ISO standards ARE VALID Tech topics.
+1. SFT, ET, BST include topics that sound like other subjects but ARE VALID.
 2. IF the user's concept is found in the provided PDF or uploaded image/file, YOU MUST NEVER REFUSE IT.
 3. Refuse ONLY if the topic is 100% outside the Tech Stream domain AND is not mentioned in any provided document/image. 
    - Refusal message: "කණගාටුයි! මට පිළිතුරු දිය හැක්කේ උසස් පෙළ තාක්ෂණවේදය (ET, SFT, BST, ICT) විෂයයන්ට අදාළ ප්‍රශ්න සඳහා පමණයි."
 
-ANSWERING LOGIC:
-- If an image is provided, carefully read the text/diagrams inside the question paper photo.
-- Formulate the answer strictly following Sri Lankan G.C.E. A/L examination marking schemes.
-- Combine knowledge from the provided syllabus PDFs and your expert AI capabilities.
+IMAGE PROCESSING INSTRUCTION (CRITICAL):
+- If an image is uploaded, YOUR HIGHEST PRIORITY IS TO READ AND SOLVE THE EXACT QUESTION SHOWN IN THE IMAGE.
+- Do NOT hallucinate or answer unrelated PDF topics.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
@@ -78,8 +75,9 @@ if submit_button:
         with st.spinner("තොරතුරු හා පින්තූර විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
             try:
                 context_text = ""
-                
-                # 1. පරිශීලකයා අලුතින් PDF එකක් Upload කර තිබේ නම් එයින් Text ලබාගැනීම
+                is_image = uploaded_file and uploaded_file.type.startswith("image/")
+
+                # 1. පරිශීලකයා අලුතින් PDF එකක් Upload කර තිබේ නම්
                 if uploaded_file and uploaded_file.type == "application/pdf":
                     try:
                         custom_pdf_reader = PdfReader(uploaded_file)
@@ -89,21 +87,32 @@ if submit_button:
                     except Exception as e:
                         st.error(f"PDF කියවීමේ දෝෂයක්: {e}")
 
-                # 2. Server එකේ ඇති PDF වලින් Keyword සෙවීම
+                # 2. Server එකේ ඇති PDF වලින් Keyword සෙවීම (Photo එකක් නැති විට පමණක් අදාළ වේ)
                 if user_input:
-                    query_words = [w for w in user_input.split() if len(w) > 2]
-                    relevant_pages = [p for p in pdf_pages if any(w.lower() in p.lower() for w in query_words)]
-                    if relevant_pages:
-                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:20000]
-                    else:
-                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(pdf_pages)[:20000]
-
-                final_prompt_text = f"Official Syllabus Context (PDF):\n{context_text}\n\nUser Prompt: {user_input if user_input else 'කරුණාකර ඇතුළත් කර ඇති පින්තූරයේ/ගොනුවේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව නිවැරදි උත්තර ලබාදෙන්න.'}"
-
-                # 3. Image ද නැතහොත් Text විතරද යන්න මත Model එක තේරීම
-                if uploaded_file and uploaded_file.type.startswith("image/"):
-                    base64_image = base64.b64encode(uploaded_file.read()).decode('utf-8')
+                    stopwords = {"photo", "ekata", "adalawa", "uththara", "denna", "me", "mewa", "prashna", "uthtara", "thiyena"}
+                    query_words = [w.lower() for w in user_input.split() if len(w) > 2 and w.lower() not in stopwords]
                     
+                    relevant_pages = []
+                    if query_words:
+                        relevant_pages = [p for p in pdf_pages if any(w in p.lower() for w in query_words)]
+                    
+                    if relevant_pages:
+                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(relevant_pages)[:10000]
+                    elif not is_image:
+                        # Photo එකක් නැතිව Text විතරක් අහද්දි විතරක් PDF ඔක්කොම සෙවීම
+                        context_text += "\n\n---\n\n" + "\n\n---\n\n".join(pdf_pages)[:15000]
+
+                # Prompt සකස් කිරීම
+                if is_image:
+                    final_prompt_text = f"CRITICAL TASK: Carefully read the uploaded image and solve the exact questions inside it.\nUser instructions: {user_input if user_input else 'මෙම පින්තූරයේ ඇති ප්‍රශ්නවලට A/L Marking Scheme එකට අනුව පිළිතුරු සපයන්න.'}"
+                    if context_text.strip():
+                        final_prompt_text += f"\n\nSyllabus Reference Context:\n{context_text}"
+                else:
+                    final_prompt_text = f"Official Syllabus Context (PDF):\n{context_text}\n\nUser Prompt: {user_input}"
+
+                # Model තේරීම
+                if is_image:
+                    base64_image = base64.b64encode(uploaded_file.read()).decode('utf-8')
                     user_content = [
                         {"type": "text", "text": final_prompt_text},
                         {
@@ -125,15 +134,14 @@ if submit_button:
                     else:
                         model_name = "groq/llama-3.3-70b-versatile"
 
-                # LiteLLM API Call
+                # API Call
                 response = completion(
                     model=model_name,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
                     ],
-                    temperature=0.2,
-                    frequency_penalty=0.5
+                    temperature=0.1
                 )
                 
                 answer = response.choices[0].message.content
