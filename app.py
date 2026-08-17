@@ -45,24 +45,29 @@ st.write("උසස් පෙළ **තාක්ෂණවේදය (ET / SFT / BS
 
 # Text Input Form
 with st.form(key="chat_form"):
-    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය, හෝ ප්‍රතිදේහ...")
+    user_input = st.text_input("ඔබේ ප්‍රශ්නය ඇතුළත් කරන්න:", placeholder="උදා: 5M සංකල්පය, හුක් නියමය, හෝ කොහොඹ ගසේ වැදගත්කම...")
     submit_button = st.form_submit_button(label="පිළිතුර ලබාගන්න")
 
+# System Prompt - Updated for Detailed Sinhala Explanations
 system_prompt = """
 You are an expert Sri Lankan G.C.E. A/L Technology stream (ET, SFT, BST, ICT) Master Teacher.
 
 CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
-FORMATTING RULES:
-- Write in accurate examination-standard Sinhala (සිංහල).
-- Use clear bullet points and bold technical terms.
-- Provide direct, structured answers based on Sri Lankan A/L marking schemes.
+DETAILED ANSWERING RULES:
+- Provide clear, comprehensive, and detailed examination-standard Sinhala explanations.
+- Structure answers logically with:
+  1. Primary Answer / Definition (අර්ථදැක්වීම / ප්‍රධාන පිළිතුර)
+  2. Detailed Explanation (විස්තරාත්මක පැහැදිලි කිරීම)
+  3. Key Examples & Technical Terms (උදාහරණ සහ තාක්ෂණික පද - Bold වලින්)
+  4. Practical Applications / Marking Scheme Points (ප්‍රායෝගික භාවිත / ලකුණු දීමේ පටිපාටියට අදාළ කරුණු)
+- Use clear bullet points and structural spacing.
 """
 
 if submit_button:
     if user_input.strip():
-        with st.spinner("විශ්ලේෂණය කර පිළිතුර සකසමින් පවතී..."):
+        with st.spinner("විශ්ලේෂණය කර විස්තරාත්මක පිළිතුර සකසමින් පවතී..."):
             try:
                 # PDF Context search
                 query_words = [w.lower() for w in user_input.split() if len(w) > 2]
@@ -70,9 +75,9 @@ if submit_button:
                 
                 context_text = ""
                 if relevant_pages:
-                    context_text = "\n\n---\n\n".join(relevant_pages)[:8000]
+                    context_text = "\n\n---\n\n".join(relevant_pages)[:10000]
 
-                user_content = f"Syllabus Context:\n{context_text}\n\nUser Question: {user_input}"
+                user_content = f"Syllabus Context from PDFs:\n{context_text}\n\nUser Question: {user_input}\n\nPlease provide a full, detailed A/L exam-standard Sinhala answer."
 
                 response = client.chat.completions.create(
                     model="deepseek/deepseek-chat",
@@ -81,14 +86,14 @@ if submit_button:
                         {"role": "user", "content": user_content}
                     ],
                     temperature=0.2,
-                    max_tokens=1000
+                    max_tokens=1500
                 )
 
                 answer = response.choices[0].message.content
-                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි පිළිතුර:")
+                st.success("විෂය නිර්දේශයට අදාළ නිවැරදි විස්තරාත්මක පිළිතුර:")
                 st.markdown(answer)
 
             except Exception as e:
                 st.error(f"දෝෂයක් ඇති විය: {e}")
     else:
-        st.warning("කරුණාකර ප්‍රශ්නයක් ඇතුළත් කරන්න.")  
+        st.warning("කරුණාකර ප්‍රශ්නයක් ඇතුළත් කරන්න.")
