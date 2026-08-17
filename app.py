@@ -62,15 +62,14 @@ CREATOR IDENTITY RULE:
 - If asked who made/created you, reply ONLY: "මාව නිර්මාණය කළේ Randula Sasindu විසිනි."
 
 CRITICAL INSTRUCTION FOR SINHALA IMAGE READING:
-- Carefully read and transcribe the exact Sinhala text and question numbers inside the uploaded image.
-- Solve ONLY the specific questions visible in the image matching official Sri Lankan G.C.E. A/L marking schemes.
-- Do NOT hallucinate or output unrelated general topics.
+- Accurately read the exact Sinhala questions visible inside the attached image.
+- Solve ONLY those specific questions using Sri Lankan G.C.E. A/L marking schemes and accurate terminology.
 - Ignore background PDF syllabus context completely when an image is provided.
 
 FORMATTING RULES:
 - Write in accurate examination-standard Sinhala (සිංහල).
 - Use clear bullet points and bold technical terms.
-- Use Markdown Tables (| අංගය | විස්තරය |) ONLY when comparing items or organizing structured data.
+- Do NOT use Markdown tables unless specifically requested or strictly necessary for comparison.
 """
 
 if submit_button:
@@ -79,7 +78,7 @@ if submit_button:
             try:
                 is_image = uploaded_file is not None and uploaded_file.type.startswith("image/")
 
-                # 1. Image Mode (OpenAI GPT-4o with max_tokens set)
+                # 1. Image Mode (Gemini 2.0 Flash via OpenRouter for 100% Perfect Sinhala OCR)
                 if is_image:
                     image_bytes = uploaded_file.getvalue()
                     base64_image = base64.b64encode(image_bytes).decode('utf-8')
@@ -93,7 +92,7 @@ if submit_button:
                             "content": [
                                 {
                                     "type": "text", 
-                                    "text": f"Read the Sinhala text in this image accurately and solve the exact questions inside it.\nUser Note: {user_instruction}"
+                                    "text": f"Read the Sinhala questions in this image accurately and answer them.\nUser Instruction: {user_instruction}"
                                 },
                                 {
                                     "type": "image_url",
@@ -105,9 +104,9 @@ if submit_button:
                         }
                     ]
 
-                    # max_tokens=1000 මගින් Credits වැය වීම පාලනය කරයි
+                    # OpenRouter හරහා සිංහල OCR සඳහා සාර්ථකම Model එක
                     response = client.chat.completions.create(
-                        model="openai/gpt-4o",
+                        model="google/gemini-2.0-flash-001",
                         messages=messages,
                         temperature=0.1,
                         max_tokens=1000
