@@ -102,7 +102,6 @@ if submit_button:
 
                 # 3. Image ද නැතහොත් Text විතරද යන්න මත Model එක තේරීම
                 if uploaded_file and uploaded_file.type.startswith("image/"):
-                    # Photo එකක් නම් Image එක Base64 බවට හරවා Vision Model එකක් තෝරා ගැනීම
                     base64_image = base64.b64encode(uploaded_file.read()).decode('utf-8')
                     
                     user_content = [
@@ -115,13 +114,11 @@ if submit_button:
                         }
                     ]
                     
-                    # Vision Support කරන Models
                     if "OPENROUTER_API_KEY" in os.environ:
-                        model_name = "openrouter/google/gemini-2.0-flash-001"
+                        model_name = "openrouter/openai/gpt-4o-mini"
                     else:
                         model_name = "groq/llama-3.2-11b-vision-instruct"
                 else:
-                    # Text පමණක් නම්
                     user_content = final_prompt_text
                     if "OPENROUTER_API_KEY" in os.environ:
                         model_name = "openrouter/deepseek/deepseek-chat"
